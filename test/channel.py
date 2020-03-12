@@ -95,10 +95,19 @@ class ChannelTestTopic(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise("332 * #chan :test"))
         self.assertEqual(server.channels["#chan"].topic, "test")
 
-    def test_set_time(self):
+    def test_set_by_at(self):
         dt = datetime(2020, 3, 12, 14, 27, 57)
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise("333 * #chan other 1584023277"))
-        self.assertEqual(server.channels["#chan"].topic_time, dt)
+        channel = server.channels["#chan"]
+        self.assertEqual(channel.topic_setter, "other")
+        self.assertEqual(channel.topic_time, dt)
+
+    def test_topic_command(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise("TOPIC #chan :hello there"))
+        self.assertEqual(server.channels["#chan"].topic, "hello there")
