@@ -205,7 +205,7 @@ class Server(Named):
                     channel_user.modes.add(mode)
 
     @line_handler("329")
-    # channel reation time, "MODE #channel" response (and on-join)
+    # channel creation time, "MODE #channel" response (and on-join)
     def handle_329(self, line: Line):
         channel_lower = self.casemap_lower(line.params[1])
         if channel_lower in self.channels:
