@@ -69,7 +69,7 @@ class Server(Named):
         self.encoder.push(Line(command="PONG", params=line.params))
 
     @line_handler("001")
-    def handle_ISUPPORT(self, line: Line):
+    def handle_001(self, line: Line):
         self.nickname = line.params[0]
 
     @line_handler("005")
