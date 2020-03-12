@@ -12,3 +12,6 @@ class Channel(Named):
 
         self.list_modes:   Dict[str, List[str]] = {}
         self.modes:        Dict[str, str]       = {}
+
+    def __repr__(self) -> str:
+        return f"Channel(name={self.name!r})"

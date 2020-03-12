@@ -10,3 +10,8 @@ class ChannelUser(object):
         self.user    = user
 
         self.modes: Set[str] = set([])
+
+    def __repr__(self) -> str:
+        return (f"ChannelUser(user={self.user.nickname!r},"
+            f" channel={self.channel.name!r},"
+            f" modes={''.join(self.modes)!r})")

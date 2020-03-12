@@ -28,6 +28,9 @@ class Server(Named):
 
         self.isupport = ISupport()
 
+    def __repr__(self) -> str:
+        return f"Server(name={self.name!r})"
+
     def parse_tokens(self, line: Line):
         if line.command in LINE_HANDLERS:
             for callback in LINE_HANDLERS[line.command]:
