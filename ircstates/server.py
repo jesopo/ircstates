@@ -302,3 +302,10 @@ class Server(Named):
             modes   = [(True, char) for char in line.params[2].lstrip("+")]
             params  = line.params[3:]
             self._channel_modes(channel, modes, params)
+
+    @line_handler("211")
+    # our own user modes, "MODE nickname" response (sometimes on-connect?)
+    def handle_211(self, line: Line):
+        for char in line.params[1].lstrip("+"):
+            if not char in self.modes:
+                self.modes.append(char)

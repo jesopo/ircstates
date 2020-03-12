@@ -98,3 +98,24 @@ class ModeTestChannelNumeric(unittest.TestCase):
         channel = server.channels["#chan"]
         self.assertEqual(channel.modes, {"k": "pass", "l": "10", "i": None})
         self.assertEqual(channel.list_modes, {"b": ["*!*@*"]})
+
+    def test_without_plus(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise("324 * #chan il 10"))
+        channel = server.channels["#chan"]
+        self.assertEqual(channel.modes, {"i": None, "l": "10"})
+
+class ModeTestUserNumeric(unittest.TestCase):
+    def test(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("211 * +iw"))
+        self.assertEqual(server.modes, ["i", "w"])
+
+    def test_without_plus(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("211 * iw"))
+        self.assertEqual(server.modes, ["i", "w"])
