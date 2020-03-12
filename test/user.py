@@ -19,7 +19,7 @@ class UserTestNicknameChange(unittest.TestCase):
         self.assertNotIn("other", server.users)
         self.assertIn("other2", server.users)
 
-class UserTestUserHost(unittest.TestCase):
+class UserTestUserHostSelf(unittest.TestCase):
     def test_both(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
@@ -35,9 +35,99 @@ class UserTestUserHost(unittest.TestCase):
         self.assertEqual(server.username, "user")
         self.assertIsNone(server.hostname)
 
-    def test_user(self):
+    def test_host(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise(":nickname@host JOIN #chan"))
         self.assertIsNone(server.username)
         self.assertEqual(server.hostname, "host")
+
+class UserTestUserHostOther(unittest.TestCase):
+    def test_both(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other!user@host JOIN #chan"))
+        user = server.users["other"]
+        self.assertEqual(user.username, "user")
+        self.assertEqual(user.hostname, "host")
+
+    def test_user(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other!user JOIN #chan"))
+        user = server.users["other"]
+        self.assertEqual(user.username, "user")
+        self.assertIsNone(user.hostname)
+
+    def test_host(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other@host JOIN #chan"))
+        user = server.users["other"]
+        self.assertIsNone(user.username)
+        self.assertEqual(user.hostname, "host")
+
+class UserTestPRIVMSGSelfHostmask(unittest.TestCase):
+    def test_both(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(
+            irctokens.tokenise(":nickname!user@host PRIVMSG #chan :hi"))
+        self.assertEqual(server.username, "user")
+        self.assertEqual(server.hostname, "host")
+
+    def test_user(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(
+            irctokens.tokenise(":nickname!user PRIVMSG #chan :hi"))
+        self.assertEqual(server.username, "user")
+        self.assertIsNone(server.hostname)
+
+    def test_host(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(
+            irctokens.tokenise(":nickname@host PRIVMSG #chan :hi"))
+        self.assertIsNone(server.username)
+        self.assertEqual(server.hostname, "host")
+
+class UserTestPRIVMSGOtherHostmask(unittest.TestCase):
+    def test_both(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
+        server.parse_tokens(
+            irctokens.tokenise(":other!user@host PRIVMSG #chan :hi"))
+        user = server.users["other"]
+        self.assertEqual(user.username, "user")
+        self.assertEqual(user.hostname, "host")
+
+    def test_user(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
+        server.parse_tokens(
+            irctokens.tokenise(":other!user PRIVMSG #chan :hi"))
+        user = server.users["other"]
+        self.assertEqual(user.username, "user")
+        self.assertIsNone(user.hostname)
+
+    def test_host(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
+        server.parse_tokens(
+            irctokens.tokenise(":other@host PRIVMSG #chan :hi"))
+        user = server.users["other"]
+        self.assertIsNone(user.username)
+        self.assertEqual(user.hostname, "host")

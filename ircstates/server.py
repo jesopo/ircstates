@@ -320,3 +320,19 @@ class Server(Named):
         for char in line.params[1].lstrip("+"):
             if not char in self.modes:
                 self.modes.append(char)
+
+    @line_handler("PRIVMSG")
+    def handle_PRIVMSG(self, line: Line):
+        nickname_lower = self.casemap_lower(line.hostmask.nickname)
+        if nickname_lower in self.users:
+            user = self.users[nickname_lower]
+            if line.hostmask.username:
+                user.username = line.hostmask.username
+            if line.hostmask.hostname:
+                user.hostname = line.hostmask.hostname
+
+            if line.hostmask.nickname == self.nickname:
+                if line.hostmask.username:
+                    self.username = line.hostmask.username
+                if line.hostmask.hostname:
+                    self.hostname = line.hostmask.hostname
