@@ -236,25 +236,45 @@ class Server(Named):
             channel.topic_setter = line.params[2]
             channel.topic_time   = datetime.fromtimestamp(int(line.params[3]))
 
+    def _channel_modes(self,
+            channel: Channel,
+            parts: Tuple[bool, str],
+            params: List[str]):
+        for add, char in parts:
+            list_mode = char in self.isupport.chanmodes.list_modes
+            if add and (
+                    list_mode or
+                    char in self.isupport.chanmodes.setting_b_modes or
+                    char in self.isupport.chanmodes.setting_c_modes):
+                channel.add_mode(char, params.pop(0), list_mode)
+            elif not add and (
+                    list_mode or
+                    char in self.isupport.chanmodes.setting_b_modes):
+                channel.remove_mode(char, params.pop(0))
+            elif add:
+                channel.add_mode(char, None, False)
+            else:
+                channel.remove_mode(char, None)
+
     @line_handler("MODE")
     def handle_MODE(self, line: Line):
-        target = line.params[0]
-        modes  = line.params[1]
-        params = line.params[2:].copy()
+        target     = line.params[0]
+        modes_str  = line.params[1]
+        params     = line.params[2:].copy()
 
-        modifier         = True
-        parts: List[Tuple[bool, str]] = []
+        modifier                      = True
+        modes: List[Tuple[bool, str]] = []
 
-        for c in list(modes):
+        for c in list(modes_str):
             if c == "+":
                 modifier = True
             elif c == "-":
                 modifier = False
             else:
-                parts.append((modifier, c))
+                modes.append((modifier, c))
 
         if target == self.nickname:
-            for add, char in parts:
+            for add, char in modes:
                 if add:
                     if not char in self.modes:
                         self.modes.append(char)
@@ -262,18 +282,14 @@ class Server(Named):
                     self.modes.remove(char)
         elif self.has_channel(target):
             channel = self.channels[self.casemap_lower(target)]
-            for add, char in parts:
-                list_mode = char in self.isupport.chanmodes.list_modes
-                if add and (
-                        list_mode or
-                        char in self.isupport.chanmodes.setting_b_modes or
-                        char in self.isupport.chanmodes.setting_c_modes):
-                    channel.add_mode(char, params.pop(0), list_mode)
-                elif not add and (
-                        list_mode or
-                        char in self.isupport.chanmodes.setting_b_modes):
-                    channel.remove_mode(char, params.pop(0))
-                elif add:
-                    channel.add_mode(char, None, False)
-                else:
-                    channel.remove_mode(char, None)
+            self._channel_modes(channel, modes, params)
+
+    @line_handler("324")
+    # channel modes, "MODE #channel" response (sometimes on-join?)
+    def handle_324(self, line: Line):
+        channel_lower = self.casemap_lower(line.params[1])
+        if channel_lower in self.channels:
+            channel = self.channels[channel_lower]
+            modes   = [(True, char) for char in line.params[2].lstrip("+")]
+            params  = line.params[3:]
+            self._channel_modes(channel, modes, params)

@@ -88,3 +88,13 @@ class ModeTestChannelTypeD(unittest.TestCase):
         channel = server.channels["#chan"]
         self.assertEqual(channel.list_modes, {})
 
+class ModeTestChannelNumeric(unittest.TestCase):
+    def test(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(
+            irctokens.tokenise("324 * #chan +bkli *!*@* pass 10"))
+        channel = server.channels["#chan"]
+        self.assertEqual(channel.modes, {"k": "pass", "l": "10", "i": None})
+        self.assertEqual(channel.list_modes, {"b": ["*!*@*"]})
