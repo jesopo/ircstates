@@ -9,6 +9,6 @@ install:
   - pip3 install mypy -r requirements.txt
 script:
   - pip3 freeze
-  - mypy ircstates --ignore-missing-imports
+  - mypy ircstates
   - python3 -m unittest test
 
