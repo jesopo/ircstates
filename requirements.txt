@@ -1,1 +1,1 @@
-irctokens ==0.7.1
+irctokens ==0.7.2
