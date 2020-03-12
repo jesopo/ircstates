@@ -23,6 +23,7 @@ class Server(Named):
 
         self.nickname         = ""
         self.modes: List[str] = []
+        self.motd: List[str]  = []
 
         self._encoder = StatefulEncoder()
         self._decoder = StatefulDecoder()
@@ -101,6 +102,14 @@ class Server(Named):
     # https://defs.ircdocs.horse/defs/isupport.html
     def handle_ISUPPORT(self, line: Line):
         self.isupport.tokens(line.params[1:-1])
+
+    @line_handler("375")
+    def handle_375(self, line: Line):
+        self.motd.clear()
+    @line_handler("375")
+    @line_handler("372")
+    def handle_372(self, line: Line):
+        self.motd.append(line.params[1])
 
     @line_handler("NICK")
     def handle_NICK(self, line: Line):
