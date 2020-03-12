@@ -93,10 +93,12 @@ class Server(Named):
         self.send(build("PONG", line.params))
 
     @line_handler("001")
+    # first message reliably sent to us after registration is complete
     def handle_001(self, line: Line):
         self.nickname = line.params[0]
 
     @line_handler("005")
+    # https://defs.ircdocs.horse/defs/isupport.html
     def handle_ISUPPORT(self, line: Line):
         self.isupport.tokens(line.params[1:-1])
 
@@ -180,7 +182,8 @@ class Server(Named):
     def handle_ERROR(self, line: Line):
         self._self_quit()
 
-    @line_handler("353") # user list, "NAMES #channel" response (and on-join)
+    @line_handler("353")
+    # channel's user list, "NAMES #channel" response (and on-join)
     def handle_353(self, line: Line):
         channel_lower = self.casemap_lower(line.params[2])
         if channel_lower in self.channels:
@@ -218,12 +221,14 @@ class Server(Named):
             channel.topic_setter = str(line.hostmask)
             channel.topic_time   = datetime.utcnow()
 
-    @line_handler("332") # topic text, "TOPIC #channel" response (and on-join)
+    @line_handler("332")
+    # topic text, "TOPIC #channel" response (and on-join)
     def handle_332(self, line: Line):
         channel_lower = self.casemap_lower(line.params[1])
         if channel_lower in self.channels:
             self.channels[channel_lower].topic = line.params[2]
-    @line_handler("333") # topic setby, "TOPIC #channel" response (and on-join)
+    @line_handler("333")
+    # topic setby, "TOPIC #channel" response (and on-join)
     def handle_333(self, line: Line):
         channel_lower = self.casemap_lower(line.params[1])
         if channel_lower in self.channels:
