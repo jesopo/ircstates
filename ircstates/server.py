@@ -201,6 +201,14 @@ class Server(Named):
                 for mode in modes:
                     channel_user.modes.add(mode)
 
+    @line_handler("329")
+    # channel reation time, "MODE #channel" response (and on-join)
+    def handle_329(self, line: Line):
+        channel_lower = self.casemap_lower(line.params[1])
+        if channel_lower in self.channels:
+            channel = self.channels[channel_lower]
+            channel.created = datetime.fromtimestamp(int(line.params[2]))
+
     @line_handler("TOPIC")
     def handle_TOPIC(self, line: Line):
         channel_lower = self.casemap_lower(line.params[0])

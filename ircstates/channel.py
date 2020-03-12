@@ -10,6 +10,8 @@ class Channel(Named):
         self.topic_setter: Optional[str]      = None
         self.topic_time:   Optional[datetime] = None
 
+        self.created:      Optional[datetime] = None
+
         self.list_modes:   Dict[str, List[str]]     = {}
         self.modes:        Dict[str, Optional[str]] = {}
 
