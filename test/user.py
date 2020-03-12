@@ -131,3 +131,18 @@ class UserTestPRIVMSGOtherHostmask(unittest.TestCase):
         user = server.users["other"]
         self.assertIsNone(user.username)
         self.assertEqual(user.hostname, "host")
+
+class UserTestVisibleHost(unittest.TestCase):
+    def test_without_username(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("396 * hostname"))
+        self.assertIsNone(server.username)
+        self.assertEqual(server.hostname, "hostname")
+
+    def test_with_username(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("396 * username@hostname"))
+        self.assertEqual(server.username, "username")
+        self.assertEqual(server.hostname, "hostname")

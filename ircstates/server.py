@@ -336,3 +336,11 @@ class Server(Named):
                     self.username = line.hostmask.username
                 if line.hostmask.hostname:
                     self.hostname = line.hostmask.hostname
+
+    @line_handler("396")
+    # our own hostname, sometimes username@hostname, when it changes
+    def handle_396(self, line: Line):
+        username, _, hostname = line.params[1].rpartition("@")
+        self.hostname = hostname
+        if username:
+            self.username = username
