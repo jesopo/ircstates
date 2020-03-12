@@ -247,9 +247,9 @@ class Server(Named):
 
     def _channel_modes(self,
             channel: Channel,
-            parts: Tuple[bool, str],
+            modes: List[Tuple[bool, str]],
             params: List[str]):
-        for add, char in parts:
+        for add, char in modes:
             list_mode = char in self.isupport.chanmodes.list_modes
             if add and (
                     list_mode or
