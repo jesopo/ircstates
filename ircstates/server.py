@@ -43,7 +43,7 @@ class Server(Named):
     def get_user(self, nickname: str) -> User:
         nickname_lower = self.casemap_lower(nickname)
         if not nickname_lower in self.users:
-            user = User()
+            user = User(nickname)
             user.set_nickname(nickname, nickname_lower)
             self.users[nickname_lower] = user
         return self.users[nickname_lower]

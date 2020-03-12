@@ -2,10 +2,8 @@ from typing import Optional, Set
 from .named import Named
 
 class User(Named):
-    nickname: Optional[str]
-
-    def __init__(self):
-        self.nickanme: Optional[str] = None
+    def __init__(self, nickname: str):
+        self.nickname = nickname
 
     def set_nickname(self, nickname: str,
             nickname_lower: str):
