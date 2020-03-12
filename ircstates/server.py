@@ -58,9 +58,9 @@ class Server(Named):
                 callback(self, line)
 
     def casemap_lower(self, s1: str):
-        return s1
+        return s1.lower()
     def casemap_equals(self, s1: str, s2: str):
-        return True
+        return self.casemap_lower(s1) == self.casemap_lower(s2)
 
     def has_user(self, nickname: str) -> bool:
         return self.casemap_lower(nickname) in self.users
