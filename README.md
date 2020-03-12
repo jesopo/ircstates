@@ -35,7 +35,7 @@ _send("USER test 0 * :test")
 _send("NICK test321")
 
 while True:
-    while server..pending():
+    while server.pending():
         send_lines = server.sent(sock.send(server.pending()))
         for line in send_lines:
             print(f"> {line.format()}")
