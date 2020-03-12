@@ -6,5 +6,6 @@ def line_handler_decorator(d: Dict[str, List[Any]]):
             if not command in d:
                 d[command] = []
             d[command].append(func)
+            return func
         return _
     return line_handler
