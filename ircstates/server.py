@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Set
+from typing import Callable, Dict, List, Optional, Set, Tuple
 from datetime import datetime
 from irctokens import build, Line, StatefulDecoder, StatefulEncoder
 
@@ -21,7 +21,8 @@ class Server(Named):
     def __init__(self, name: str):
         self.name = name
 
-        self.nickname = ""
+        self.nickname         = ""
+        self.modes: List[str] = []
 
         self._encoder = StatefulEncoder()
         self._decoder = StatefulDecoder()
@@ -206,3 +207,45 @@ class Server(Named):
             channel = self.channels[channel_lower]
             channel.topic_setter = line.params[2]
             channel.topic_time   = datetime.fromtimestamp(int(line.params[3]))
+
+    @line_handler("MODE")
+    def handle_MODE(self, line: Line):
+        target = line.params[0]
+        modes  = line.params[1]
+        params = line.params[2:].copy()
+
+        modifier         = True
+        parts: List[Tuple[bool, str]] = []
+
+        for c in list(modes):
+            if c == "+":
+                modifier = True
+            elif c == "-":
+                modifier = False
+            else:
+                parts.append((modifier, c))
+
+        if target == self.nickname:
+            for add, char in parts:
+                if add:
+                    if not char in self.modes:
+                        self.modes.append(char)
+                elif char in self.modes:
+                    self.modes.remove(char)
+        elif self.has_channel(target):
+            channel = self.channels[self.casemap_lower(target)]
+            for add, char in parts:
+                list_mode = char in self.isupport.chanmodes.list_modes
+                if add and (
+                        list_mode or
+                        char in self.isupport.chanmodes.setting_b_modes or
+                        char in self.isupport.chanmodes.setting_c_modes):
+                    channel.add_mode(char, params.pop(0), list_mode)
+                elif not add and (
+                        list_mode or
+                        char in self.isupport.chanmodes.setting_b_modes):
+                    channel.remove_mode(char, params.pop(0))
+                elif add:
+                    channel.add_mode(char, None, False)
+                else:
+                    channel.remove_mode(char, None)
