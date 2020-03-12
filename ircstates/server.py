@@ -127,12 +127,11 @@ class Server(Named):
             user = self.get_user(line.hostmask.nickname)
             self.user_join(channel, user)
 
-    @line_handler("PART")
-    def handle_PART(self, line: Line):
-        channel_lower = self.casemap_lower(line.params[0])
+    def _handle_part(self, nickname, channel_name):
+        channel_lower = self.casemap_lower(channel_name)
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
-            if self.casemap_equals(line.hostmask.nickname, self.nickname):
+            if self.casemap_equals(nickname, self.nickname):
                 del self.channels[channel_lower]
                 channel_users = self.channel_users.pop(channel)
 
@@ -142,7 +141,7 @@ class Server(Named):
                         del self.user_channels[user]
                         del self.users[self.casemap_lower(user.nickname)]
             else:
-                nickname_lower = self.casemap_lower(line.hostmask.nickname)
+                nickname_lower = self.casemap_lower(nickname)
                 if nickname_lower in self.users:
                     user = self.users[nickname_lower]
                     self.user_channels[user].remove(channel)
@@ -150,6 +149,13 @@ class Server(Named):
                         del self.users[nickname_lower]
                         del self.user_channels[user]
                     del self.channel_users[channel][user]
+
+    @line_handler("PART")
+    def handle_PART(self, line: Line):
+        self._handle_part(line.hostmask.nickname, line.params[0])
+    @line_handler("KICK")
+    def handle_KICK(self, line: Line):
+        self._handle_part(line.params[1], line.params[0])
 
     def _self_quit(self):
         self.users.clear()

@@ -38,6 +38,55 @@ class ChannelTestPart(unittest.TestCase):
         self.assertEqual(len(server.user_channels), 0)
         self.assertEqual(len(server.channel_users), 0)
 
+    def test_other_part(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other PART #chan"))
+
+        user = server.users["nickname"]
+        channel = server.channels["#chan"]
+
+        self.assertEqual(len(server.users), 1)
+        self.assertEqual(len(server.channels), 1)
+        self.assertIn(user, server.user_channels)
+        self.assertEqual(len(server.user_channels[user]), 1)
+        self.assertIn(channel, server.channel_users)
+        self.assertEqual(len(server.channel_users), 1)
+        self.assertIn(user, server.channel_users[channel])
+        self.assertEqual(len(server.user_channels), 1)
+
+class ChannelTestKick(unittest.TestCase):
+    def test_self_kick(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise("KICK #chan nickname"))
+        self.assertEqual(len(server.users), 0)
+        self.assertEqual(len(server.channels), 0)
+        self.assertEqual(len(server.user_channels), 0)
+        self.assertEqual(len(server.channel_users), 0)
+
+    def test_other_kick(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise("KICK #chan other"))
+
+        user = server.users["nickname"]
+        channel = server.channels["#chan"]
+
+        self.assertEqual(len(server.users), 1)
+        self.assertEqual(len(server.channels), 1)
+        self.assertIn(user, server.user_channels)
+        self.assertEqual(len(server.user_channels[user]), 1)
+        self.assertIn(channel, server.channel_users)
+        self.assertEqual(len(server.channel_users), 1)
+        self.assertIn(user, server.channel_users[channel])
+        self.assertEqual(len(server.user_channels), 1)
+
 class ChannelTestTopic(unittest.TestCase):
     def test_text(self):
         server = ircstates.Server("test")
