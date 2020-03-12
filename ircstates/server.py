@@ -1,6 +1,6 @@
 from typing import Callable, Dict, List, Optional, Set
 from datetime import datetime
-from irctokens import Line, StatefulDecoder, StatefulEncoder
+from irctokens import build, Line, StatefulDecoder, StatefulEncoder
 
 from .named import Named
 from .user import User
@@ -89,7 +89,7 @@ class Server(Named):
 
     @line_handler("PING")
     def handle_ping(self, line: Line):
-        self.send(irctokens.build("PONG", line.params))
+        self.send(build("PONG", line.params))
 
     @line_handler("001")
     def handle_001(self, line: Line):
