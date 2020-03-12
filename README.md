@@ -68,7 +68,7 @@ User(nickname='nickname')
 >>> channel
 Channel(name='#chan')
 >>> server.channel_users[channel]
-{User(nickname='nickname'): ChannelUser(user='nickname', channel='#chan')}
+{User(nickname='nickname'): ChannelUser(user='nickname', channel='#chan', modes='ov')}
 ```
 
 ### get a user's modes in channel
