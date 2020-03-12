@@ -12,14 +12,19 @@ from .decorators import line_handler_decorator
 LINE_HANDLERS: Dict[str, List[Callable[["Server", Line], None]]] = {}
 line_handler = line_handler_decorator(LINE_HANDLERS)
 
+class ServerException(Exception):
+    pass
+class ServerDisconnectedException(ServerException):
+    pass
+
 class Server(Named):
     def __init__(self, name: str):
         self.name = name
 
         self.nickname = ""
 
-        self.encoder = StatefulEncoder()
-        self.decoder = StatefulDecoder()
+        self._encoder = StatefulEncoder()
+        self._decoder = StatefulDecoder()
 
         self.users:    Dict[str, User]    = {}
         self.channels: Dict[str, Channel] = {}
@@ -30,6 +35,21 @@ class Server(Named):
 
     def __repr__(self) -> str:
         return f"Server(name={self.name!r})"
+
+    def recv(self, data: bytes) -> List[Line]:
+        lines = self._decoder.push(data)
+        if lines is None:
+            raise ServerDisconnectedException()
+        for line in lines:
+            self.parse_tokens(line)
+        return lines
+
+    def send(self, line: Line):
+        self._encoder.push(line)
+    def pending(self) -> bytes:
+        return self._encoder.pending()
+    def sent(self, byte_count: int) -> List[Line]:
+        return self._encoder.pop(byte_count)
 
     def parse_tokens(self, line: Line):
         if line.command in LINE_HANDLERS:
@@ -69,7 +89,7 @@ class Server(Named):
 
     @line_handler("PING")
     def handle_ping(self, line: Line):
-        self.encoder.push(Line(command="PONG", params=line.params))
+        self.send(irctokens.build("PONG", line.params))
 
     @line_handler("001")
     def handle_001(self, line: Line):
@@ -135,7 +155,7 @@ class Server(Named):
         self.channels.clear()
         self.user_channels.clear()
         self.channel_users.clear()
-        self.encoder.clear()
+        self._encoder.clear()
 
     @line_handler("QUIT")
     def handle_quit(self, line: Line):

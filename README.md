@@ -15,6 +15,8 @@ additional arbitrary functionality on top of it.
 
 ### socket to state
 ```python
+import ircstates, irctokens, socket
+
 NICK = "nickname"
 CHAN = "#chan"
 HOST = "127.0.0.1"
@@ -27,25 +29,20 @@ sock.connect((HOST, POST))
 
 def _send(s):
     line = irctokens.tokenise(s)
-    server.encoder.push(line)
+    server.send(line)
 
 _send("USER test 0 * :test")
 _send("NICK test321")
 
 while True:
-    while server.encoder.pending():
-        lines = server.encoder.pop(sock.send(server.encoder.pending()))
-        for line in lines:
+    while server..pending():
+        send_lines = server.sent(sock.send(server.pending()))
+        for line in send_lines:
             print(f"> {line.format()}")
 
-    lines = server.decoder.push(sock.recv(1024))
-    if lines == None:
-        print(f"! disconnected from {server.name}")
-        break
-
-    for line in lines:
+    recv_lines = server.recv(sock.recv(1024))
+    for line in recv_lines:
         print(f"< {line.format()}")
-        server.parse_tokens(line)
 
         # user defined behaviors...
         if line.command == "001" and not "#test321" in server.channels:
