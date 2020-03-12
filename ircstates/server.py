@@ -21,7 +21,9 @@ class Server(Named):
     def __init__(self, name: str):
         self.name = name
 
-        self.nickname         = ""
+        self.nickname                = ""
+        self.username: Optional[str] = None
+        self.hostname: Optional[str] = None
         self.modes: List[str] = []
         self.motd: List[str]  = []
 
@@ -132,10 +134,19 @@ class Server(Named):
                 channel = Channel(line.params[0])
                 self.channels[channel_lower] = channel
                 self.channel_users[channel] = {}
+            if line.hostmask.username:
+                self.username = line.hostmask.username
+            if line.hostmask.hostname:
+                self.hostname = line.hostmask.hostname
 
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
             user = self.get_user(line.hostmask.nickname)
+            if line.hostmask.username:
+                user.username = line.hostmask.username
+            if line.hostmask.hostname:
+                user.hostname = line.hostmask.hostname
+
             self.user_join(channel, user)
 
     def _handle_part(self, nickname, channel_name):

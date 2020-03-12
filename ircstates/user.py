@@ -3,7 +3,9 @@ from .named import Named
 
 class User(Named):
     def __init__(self, nickname: str):
-        self.nickname = nickname
+        self.nickname                = nickname
+        self.username: Optional[str] = None
+        self.hostname: Optional[str] = None
 
     def __repr__(self) -> str:
         return f"User(nickname={self.nickname!r})"
