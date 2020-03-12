@@ -23,11 +23,10 @@ class Server(Named):
 
         self.users:    Dict[str, User]    = {}
         self.channels: Dict[str, Channel] = {}
+        self.user_channels: Dict[User, Set[Channel]]        = {}
+        self.channel_users: Dict[Channel, Dict[User, ChannelUser]] = {}
 
         self.isupport = ISupport()
-
-        self.user_channels: Dict[User, Set[Channel]]        = {}
-        self.channel_users: Dict[Channel, Set[ChannelUser]] = {}
 
     def parse_tokens(self, line: Line):
         if line.command in LINE_HANDLERS:
@@ -60,10 +59,9 @@ class Server(Named):
         channel_user = ChannelUser(channel, user)
         if not user in self.user_channels:
             self.user_channels[user] =    set([])
-            self.channel_users[channel] = set([])
 
         self.user_channels[user].add(channel)
-        self.channel_users[channel].add(channel_user)
+        self.channel_users[channel][user] = channel_user
         return channel_user
 
     @line_handler("PING")
@@ -94,14 +92,63 @@ class Server(Named):
     @line_handler("JOIN")
     def handle_JOIN(self, line: Line):
         channel_lower = self.casemap_lower(line.params[0])
+        if self.casemap_equals(line.hostmask.nickname, self.nickname):
+            if not channel_lower in self.channels:
+                channel = Channel(line.params[0])
+                self.channels[channel_lower] = channel
+                self.channel_users[channel] = {}
+
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
             user = self.get_user(line.hostmask.nickname)
             self.user_join(channel, user)
 
-        elif self.casemap_equals(line.hostmask.nickname, self.nickname):
-            if not channel_lower in self.channels:
-                self.channels[channel_lower] = Channel(line.params[0])
+    @line_handler("PART")
+    def handle_PART(self, line: Line):
+        channel_lower = self.casemap_lower(line.params[0])
+        if channel_lower in self.channels:
+            channel = self.channels[channel_lower]
+            if self.casemap_equals(line.hostmask.nickname, self.nickname):
+                del self.channels[channel_lower]
+                channel_users = self.channel_users.pop(channel)
+
+                for user, cuser in channel_users.items():
+                    self.user_channels[user].remove(channel)
+                    if not self.user_channels[user]:
+                        del self.user_channels[user]
+                        del self.users[self.casemap_lower(user.nickname)]
+            else:
+                nickname_lower = self.casemap_lower(line.hostmask.nickname)
+                if nickname_lower in self.users:
+                    user = self.users[nickname_lower]
+                    self.user_channels[user].remove(channel)
+                    if not self.user_channels[user]:
+                        del self.users[nickname_lower]
+                        del self.user_channels[user]
+                    del self.channel_users[channel][user]
+
+    def _self_quit(self):
+        self.users.clear()
+        self.channels.clear()
+        self.user_channels.clear()
+        self.channel_users.clear()
+        self.encoder.clear()
+
+    @line_handler("QUIT")
+    def handle_quit(self, line: Line):
+        if line.hostmask.nickname == self.nickname:
+            self._self_quit()
+        else:
+            nickname_lower = self.casemap_lower(line.hostmask.nickname)
+            if nickname_lower in self.users:
+                user = self.users.pop(nickname_lower)
+                for channel in self.user_channels[user]:
+                    del self.channel_users[channel][user]
+                del self.user_channels[user]
+
+    @line_handler("ERROR")
+    def handle_ERROR(self, line: Line):
+        self._self_quit()
 
     @line_handler("353") # user list, "NAMES #channel" response (and on-join)
     def handle_353(self, line: Line):
@@ -135,4 +182,4 @@ class Server(Named):
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
             channel.topic_setter = line.params[2]
-            channel.topic_time   = datetime.fromtimestamp(line.params[3])
+            channel.topic_time   = datetime.fromtimestamp(int(line.params[3]))

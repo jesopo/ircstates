@@ -1,1 +1,2 @@
-from .channel import *
+from .channel  import *
+from .nickname import *
