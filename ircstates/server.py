@@ -370,6 +370,26 @@ class Server(Named):
             user.hostname = hostname
             user.realname = realname
 
+    @line_handler("311")
+    # WHOIS "user" line, one of "WHOIS nickname" response lines
+    def handle_311(self, line: Line):
+        nickname = line.params[1]
+        username = line.params[2]
+        hostname = line.params[3]
+        realname = line.params[5]
+
+        if nickname == self.nickname:
+            self.username = username
+            self.hostname = hostname
+            self.realname = realname
+
+        nickname_lower = self.casemap_lower(nickname)
+        if nickname_lower in self.users:
+            user = self.users[nickname_lower]
+            user.username = username
+            user.hostname = hostname
+            user.realname = realname
+
     @line_handler("CHGHOST")
     def handle_CHGHOST(self, line: Line):
         username = line.params[0]
