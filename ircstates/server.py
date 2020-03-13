@@ -38,6 +38,10 @@ class Server(Named):
 
         self.isupport = ISupport()
 
+        self._temp_caps: Dict[str, Optional[str]]     = {}
+        self.caps: Optional[Dict[str, Optional[str]]] = None
+        self.agreed_caps: List[str]                   = []
+
     def __repr__(self) -> str:
         return f"Server(name={self.name!r})"
 
@@ -379,3 +383,40 @@ class Server(Named):
             user = self.users[nickname_lower]
             user.username = username
             user.hostname = hostname
+
+    @line_handler("CAP")
+    def handle_CAP(self, line: Line):
+        subcommand = line.params[1].upper()
+        multiline  = line.params[2] == "*"
+        caps       = line.params[2 + (1 if multiline else 0)]
+
+        tokens: Dict[str, Optional[str]] = {}
+        for cap in filter(bool, caps.split(" ")):
+            key, _, value = cap.partition("=")
+            tokens[key] = value or None
+
+        if subcommand == "LS":
+            self._temp_caps.update(tokens)
+            if not multiline:
+                self.caps = self._temp_caps.copy()
+                self._temp_caps.clear()
+        elif subcommand == "NEW":
+            if not self.caps == None:
+                self.caps.update(tokens)
+        elif subcommand == "DEL":
+            if not self.caps == None:
+                for key in tokens.keys():
+                    if key in self.caps:
+                        del self.caps[key]
+                        if key in self.agreed_caps:
+                            self.agreed_caps.remove(key)
+        elif subcommand == "ACK":
+            for key in tokens.keys():
+                if key.startswith("-"):
+                    key = key[1:]
+                    if key in self.agreed_caps:
+                        self.agreed_caps.remove(key)
+                elif (not key in self.agreed_caps and
+                        self.caps and
+                        key in self.caps):
+                    self.agreed_caps.append(key)
