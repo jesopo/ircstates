@@ -146,3 +146,23 @@ class UserTestVisibleHost(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise("396 * username@hostname"))
         self.assertEqual(server.username, "username")
         self.assertEqual(server.hostname, "hostname")
+
+class UserTestWHO(unittest.TestCase):
+    def test_realname(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
+        server.parse_tokens(
+            irctokens.tokenise("352 * #chan user host * nickname * :0 real"))
+        server.parse_tokens(
+            irctokens.tokenise("352 * #chan user2 host2 * other * :0 real2"))
+
+        self.assertEqual(server.username, "user")
+        self.assertEqual(server.hostname, "host")
+        self.assertEqual(server.realname, "real")
+        user = server.users["other"]
+        self.assertEqual(user.username, "user2")
+        self.assertEqual(user.hostname, "host2")
+        self.assertEqual(user.realname, "real2")
+

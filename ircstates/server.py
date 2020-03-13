@@ -24,6 +24,7 @@ class Server(Named):
         self.nickname                = ""
         self.username: Optional[str] = None
         self.hostname: Optional[str] = None
+        self.realname: Optional[str] = None
         self.modes: List[str] = []
         self.motd: List[str]  = []
 
@@ -344,3 +345,23 @@ class Server(Named):
         self.hostname = hostname
         if username:
             self.username = username
+
+    @line_handler("352")
+    # WHO line, "WHO #channel|nickname" response
+    def handle_352(self, line: Line):
+        nickname = line.params[5]
+        username = line.params[2]
+        hostname = line.params[3]
+        realname = line.params[7].split(" ", 1)[1]
+
+        if nickname == self.nickname:
+            self.username = username
+            self.hostname = hostname
+            self.realname = realname
+        else:
+            nickname_lower = self.casemap_lower(line.params[5])
+            if nickname_lower in self.users:
+                user = self.users[nickname_lower]
+                user.username = username
+                user.hostname = hostname
+                user.realname = realname
