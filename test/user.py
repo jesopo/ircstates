@@ -170,8 +170,10 @@ class UserTestAWAY(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         user = server.users["nickname"]
         self.assertIsNone(user.away)
+        self.assertIsNone(server.away)
         server.parse_tokens(irctokens.tokenise(":nickname AWAY :ik ga weg"))
         self.assertEqual(user.away, "ik ga weg")
+        self.assertEqual(server.away, "ik ga weg")
 
     def test_unset(self):
         server = ircstates.Server("test")
@@ -181,3 +183,4 @@ class UserTestAWAY(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise(":nickname AWAY"))
         user = server.users["nickname"]
         self.assertIsNone(user.away)
+        self.assertIsNone(server.away)

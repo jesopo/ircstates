@@ -25,6 +25,8 @@ class Server(Named):
         self.username: Optional[str] = None
         self.hostname: Optional[str] = None
         self.realname: Optional[str] = None
+        self.away:     Optional[str] = None
+
         self.modes: List[str] = []
         self.motd: List[str]  = []
 
@@ -406,10 +408,14 @@ class Server(Named):
 
     @line_handler("AWAY")
     def handle_AWAY(self, line: Line):
+        away = line.params[0] if line.params else None
+        if line.hostmask.nickname == self.nickname:
+            self.away = away
+
         nickname_lower = self.casemap_lower(line.hostmask.nickname)
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
-            user.away = line.params[0] if line.params else None
+            user.away = away
 
     @line_handler("CAP")
     def handle_CAP(self, line: Line):
