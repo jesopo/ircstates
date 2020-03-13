@@ -38,10 +38,9 @@ class Server(Named):
 
         self.isupport = ISupport()
 
-        self.cap_ls                               = False
-        self._temp_caps: Dict[str, Optional[str]] = {}
-        self.caps: Dict[str, Optional[str]]       = {}
-        self.agreed_caps: List[str]               = []
+        self._temp_caps: Dict[str, Optional[str]]     = {}
+        self.caps: Optional[Dict[str, Optional[str]]] = None
+        self.agreed_caps: List[str]                   = []
 
     def __repr__(self) -> str:
         return f"Server(name={self.name!r})"
@@ -399,16 +398,15 @@ class Server(Named):
         if subcommand == "LS":
             self._temp_caps.update(tokens)
             if not multiline:
-                self.cap_ls = True
                 self.caps = self._temp_caps.copy()
                 self._temp_caps.clear()
         elif subcommand == "NEW":
-            if self.cap_ls:
+            if not self.caps == None:
                 self.caps.update(tokens)
         elif subcommand == "DEL":
-            if self.cap_ls:
+            if not self.caps == None:
                 for key in tokens.keys():
-                    if key in self.caps.keys():
+                    if key in self.caps:
                         del self.caps[key]
                         if key in self.agreed_caps:
                             self.agreed_caps.remove(key)
@@ -419,5 +417,6 @@ class Server(Named):
                     if key in self.agreed_caps:
                         self.agreed_caps.remove(key)
                 elif (not key in self.agreed_caps and
+                        self.caps and
                         key in self.caps):
                     self.agreed_caps.append(key)

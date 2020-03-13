@@ -4,18 +4,14 @@ import ircstates, irctokens
 class CapTestLS(unittest.TestCase):
     def test_one_line(self):
         server = ircstates.Server("test")
-        self.assertFalse(server.cap_ls)
         server.parse_tokens(irctokens.tokenise("CAP * LS :a b"))
-        self.assertTrue(server.cap_ls)
         self.assertEqual(server.caps, {"a": None, "b": None})
 
     def test_two_lines(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("CAP * LS * :a b"))
-        self.assertFalse(server.cap_ls)
-        self.assertEqual(server.caps, {})
+        self.assertEqual(server.caps, None)
         server.parse_tokens(irctokens.tokenise("CAP * LS :c"))
-        self.assertTrue(server.cap_ls)
         self.assertEqual(server.caps, {"a": None, "b": None, "c": None})
 
     def test_values(self):
@@ -47,8 +43,7 @@ class CapTestNEW(unittest.TestCase):
     def test_no_ls(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("CAP * NEW :a"))
-        self.assertFalse(server.cap_ls)
-        self.assertEqual(server.caps, {})
+        self.assertEqual(server.caps, None)
 
     def test_one(self):
         server = ircstates.Server("test")
