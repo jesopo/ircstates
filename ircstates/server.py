@@ -324,6 +324,12 @@ class Server(Named):
 
     @line_handler("PRIVMSG")
     def handle_PRIVMSG(self, line: Line):
+        if line.hostmask.nickname == self.nickname:
+            if line.hostmask.username:
+                self.username = line.hostmask.username
+            if line.hostmask.hostname:
+                self.hostname = line.hostmask.hostname
+
         nickname_lower = self.casemap_lower(line.hostmask.nickname)
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
@@ -331,12 +337,6 @@ class Server(Named):
                 user.username = line.hostmask.username
             if line.hostmask.hostname:
                 user.hostname = line.hostmask.hostname
-
-            if line.hostmask.nickname == self.nickname:
-                if line.hostmask.username:
-                    self.username = line.hostmask.username
-                if line.hostmask.hostname:
-                    self.hostname = line.hostmask.hostname
 
     @line_handler("396")
     # our own hostname, sometimes username@hostname, when it changes
