@@ -111,7 +111,7 @@ class UserTestVisibleHost(unittest.TestCase):
         self.assertEqual(server.hostname, "hostname")
 
 class UserTestWHO(unittest.TestCase):
-    def test_realname(self):
+    def test(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
@@ -129,3 +129,18 @@ class UserTestWHO(unittest.TestCase):
         self.assertEqual(user.hostname, "host2")
         self.assertEqual(user.realname, "real2")
 
+class UserTestCHGHOST(unittest.TestCase):
+    def test(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(
+            irctokens.tokenise(":nickname!user@host JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":nickname CHGHOST u h"))
+        self.assertEqual(server.username, "u")
+        self.assertEqual(server.hostname, "h")
+        server.parse_tokens(
+            irctokens.tokenise(":other!user2@host2 JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other CHGHOST u2 h2"))
+        user = server.users["other"]
+        self.assertEqual(user.username, "u2")
+        self.assertEqual(user.hostname, "h2")

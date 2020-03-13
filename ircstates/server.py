@@ -358,10 +358,24 @@ class Server(Named):
             self.username = username
             self.hostname = hostname
             self.realname = realname
-        else:
-            nickname_lower = self.casemap_lower(line.params[5])
-            if nickname_lower in self.users:
-                user = self.users[nickname_lower]
-                user.username = username
-                user.hostname = hostname
-                user.realname = realname
+
+        nickname_lower = self.casemap_lower(line.params[5])
+        if nickname_lower in self.users:
+            user = self.users[nickname_lower]
+            user.username = username
+            user.hostname = hostname
+            user.realname = realname
+
+    @line_handler("CHGHOST")
+    def handle_CHGHOST(self, line: Line):
+        username = line.params[0]
+        hostname = line.params[1]
+        if line.hostmask.nickname == self.nickname:
+            self.username = username
+            self.hostname = hostname
+
+        nickname_lower = self.casemap_lower(line.hostmask.nickname)
+        if nickname_lower in self.users:
+            user = self.users[nickname_lower]
+            user.username = username
+            user.hostname = hostname
