@@ -168,19 +168,40 @@ class UserTestAWAY(unittest.TestCase):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
-        user = server.users["nickname"]
-        self.assertIsNone(user.away)
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
+        user = server.users["other"]
         self.assertIsNone(server.away)
-        server.parse_tokens(irctokens.tokenise(":nickname AWAY :ik ga weg"))
+        self.assertIsNone(user.away)
+        server.parse_tokens(irctokens.tokenise(":nickname AWAY :bye bye"))
+        server.parse_tokens(irctokens.tokenise(":other AWAY :ik ga weg"))
+        self.assertEqual(server.away, "bye bye")
         self.assertEqual(user.away, "ik ga weg")
-        self.assertEqual(server.away, "ik ga weg")
 
     def test_unset(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":nickname AWAY :ik ga weg"))
         server.parse_tokens(irctokens.tokenise(":nickname AWAY"))
-        user = server.users["nickname"]
-        self.assertIsNone(user.away)
+        server.parse_tokens(irctokens.tokenise(":other AWAY :ik ga weg"))
+        server.parse_tokens(irctokens.tokenise(":other AWAY"))
+        user = server.users["other"]
         self.assertIsNone(server.away)
+        self.assertIsNone(user.away)
+
+class UserTestSETNAME(unittest.TestCase):
+    def test(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
+        user = server.users["other"]
+        self.assertIsNone(user.realname)
+        self.assertIsNone(server.realname)
+        server.parse_tokens(
+            irctokens.tokenise(":nickname SETNAME :new now know how"))
+        server.parse_tokens(
+            irctokens.tokenise(":other SETNAME :tyrannosaurus hex"))
+        self.assertEqual(server.realname, "new now know how")
+        self.assertEqual(user.realname, "tyrannosaurus hex")

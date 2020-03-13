@@ -406,6 +406,17 @@ class Server(Named):
             user.username = username
             user.hostname = hostname
 
+    @line_handler("SETNAME")
+    def handle_SETNAME(self, line: Line):
+        realname = line.params[0]
+        if line.hostmask.nickname == self.nickname:
+            self.realname = realname
+
+        nickname_lower = self.casemap_lower(line.hostmask.nickname)
+        if nickname_lower in self.users:
+            user = self.users[nickname_lower]
+            user.realname = realname
+
     @line_handler("AWAY")
     def handle_AWAY(self, line: Line):
         away = line.params[0] if line.params else None
