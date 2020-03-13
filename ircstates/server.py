@@ -401,12 +401,12 @@ class Server(Named):
                 self.caps = self._temp_caps.copy()
                 self._temp_caps.clear()
         elif subcommand == "NEW":
-            if not self.caps == None:
+            if not self.caps is None:
                 self.caps.update(tokens)
         elif subcommand == "DEL":
-            if not self.caps == None:
+            if not self.caps is None:
                 for key in tokens.keys():
-                    if key in self.caps:
+                    if key in self.caps.keys():
                         del self.caps[key]
                         if key in self.agreed_caps:
                             self.agreed_caps.remove(key)
