@@ -8,6 +8,8 @@ class User(Named):
         self.hostname: Optional[str] = None
         self.realname: Optional[str] = None
 
+        self.away: Optional[str]     = None
+
     def __repr__(self) -> str:
         return f"User(nickname={self.nickname!r})"
 

@@ -162,3 +162,22 @@ class UserTestWHOIS(unittest.TestCase):
         self.assertEqual(user.username, "u2")
         self.assertEqual(user.hostname, "h2")
         self.assertEqual(user.realname, "r2")
+
+class UserTestAWAY(unittest.TestCase):
+    def test_set(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        user = server.users["nickname"]
+        self.assertIsNone(user.away)
+        server.parse_tokens(irctokens.tokenise(":nickname AWAY :ik ga weg"))
+        self.assertEqual(user.away, "ik ga weg")
+
+    def test_unset(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":nickname AWAY :ik ga weg"))
+        server.parse_tokens(irctokens.tokenise(":nickname AWAY"))
+        user = server.users["nickname"]
+        self.assertIsNone(user.away)

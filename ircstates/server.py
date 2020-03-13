@@ -404,6 +404,13 @@ class Server(Named):
             user.username = username
             user.hostname = hostname
 
+    @line_handler("AWAY")
+    def handle_AWAY(self, line: Line):
+        nickname_lower = self.casemap_lower(line.hostmask.nickname)
+        if nickname_lower in self.users:
+            user = self.users[nickname_lower]
+            user.away = line.params[0] if line.params else None
+
     @line_handler("CAP")
     def handle_CAP(self, line: Line):
         subcommand = line.params[1].upper()
