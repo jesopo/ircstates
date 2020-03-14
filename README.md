@@ -27,12 +27,12 @@ sock   = socket.socket()
 
 sock.connect((HOST, POST))
 
-def _send(s):
-    line = irctokens.tokenise(s)
-    server.send(line)
+def _send(raw):
+    tokens = irctokens.tokenise(raw)
+    server.send(tokens)
 
-_send("USER test 0 * :test")
-_send("NICK test321")
+_send("USER test 0 * test")
+_send(f"NICK {NICK}")
 
 while True:
     while server.pending():
@@ -45,8 +45,11 @@ while True:
         print(f"< {line.format()}")
 
         # user defined behaviors...
-        if line.command == "001" and not "#test321" in server.channels:
-            _send("JOIN #test321")
+        if line.command == "PING":
+            _send(f"PONG :{line.params[0]}")
+
+        if line.command == "001" and not CHAN in server.channels:
+            _send(f"JOIN {CHAN}")
 ```
 
 ### get a user's channels
