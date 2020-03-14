@@ -98,10 +98,6 @@ class Server(Named):
         self.channel_users[channel][user] = channel_user
         return channel_user
 
-    @line_handler("PING")
-    def handle_ping(self, line: Line):
-        self.send(build("PONG", line.params))
-
     @line_handler("001")
     # first message reliably sent to us after registration is complete
     def handle_001(self, line: Line):
@@ -113,10 +109,13 @@ class Server(Named):
         self.isupport.tokens(line.params[1:-1])
 
     @line_handler("375")
+    # start of MOTD
     def handle_375(self, line: Line):
         self.motd.clear()
     @line_handler("375")
+    # start of MOTD
     @line_handler("372")
+    # line of MOTD
     def handle_372(self, line: Line):
         self.motd.append(line.params[1])
 
