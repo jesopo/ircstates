@@ -439,6 +439,17 @@ class Server(Named):
             user = self.users[nickname_lower]
             user.away = away
 
+    @line_handler("ACCOUNT")
+    def handle_ACCOUNT(self, line: Line):
+        account = line.params[0].strip("*")
+        if line.hostmask.nickname == self.nickname:
+            self.account = account
+
+        nickname_lower = self.casemap_lower(line.hostmask.nickname)
+        if nickname_lower in self.users:
+            user = self.users[nickname_lower]
+            user.account = account
+
     @line_handler("CAP")
     def handle_CAP(self, line: Line):
         subcommand = line.params[1].upper()
