@@ -31,7 +31,6 @@ class Server(Named):
         self.modes: List[str] = []
         self.motd:  List[str] = []
 
-        self._encoder = StatefulEncoder()
         self._decoder = StatefulDecoder()
 
         self.users:         Dict[str, User]                        = {}
@@ -55,13 +54,6 @@ class Server(Named):
         for line in lines:
             self.parse_tokens(line)
         return lines
-
-    def send(self, line: Line):
-        self._encoder.push(line)
-    def pending(self) -> bytes:
-        return self._encoder.pending()
-    def sent(self, byte_count: int) -> List[Line]:
-        return self._encoder.pop(byte_count)
 
     def parse_tokens(self, line: Line):
         if line.command in LINE_HANDLERS:
@@ -205,7 +197,6 @@ class Server(Named):
         self.channels.clear()
         self.user_channels.clear()
         self.channel_users.clear()
-        self._encoder.clear()
 
     @line_handler("QUIT")
     def handle_quit(self, line: Line):

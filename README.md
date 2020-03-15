@@ -22,22 +22,23 @@ CHAN = "#chan"
 HOST = "127.0.0.1"
 POST = 6667
 
-server = ircstates.Server("freenode")
-sock   = socket.socket()
+server  = ircstates.Server("freenode")
+sock    = socket.socket()
+encoder = irctokens.StatefulEncoder()
 
 sock.connect((HOST, POST))
 
 def _send(raw):
     tokens = irctokens.tokenise(raw)
-    server.send(tokens)
+    encoder.push(tokens)
 
 _send("USER test 0 * test")
 _send(f"NICK {NICK}")
 
 while True:
-    while server.pending():
-        send_lines = server.sent(sock.send(server.pending()))
-        for line in send_lines:
+    while encoder.pending():
+        sent_lines = encoder.pop(sock.send(encoder.pending()))
+        for line in sent_lines:
             print(f"> {line.format()}")
 
     recv_lines = server.recv(sock.recv(1024))
