@@ -61,20 +61,20 @@ class Server(Named):
             for callback in LINE_HANDLERS[line.command]:
                 callback(self, line)
 
-    def casemap_lower(self, s1: str):
+    def casefold(self, s1: str):
         return casefold(self.isupport.casemapping, s1)
-    def casemap_equals(self, s1: str, s2: str):
-        return self.casemap_lower(s1) == self.casemap_lower(s2)
+    def casefold_equals(self, s1: str, s2: str):
+        return self.casefold(s1) == self.casefold(s2)
 
     def has_user(self, nickname: str) -> bool:
-        return self.casemap_lower(nickname) in self.users
+        return self.casefold(nickname) in self.users
     def add_user(self, nickname: str):
-        nickname_lower = self.casemap_lower(nickname)
+        nickname_lower = self.casefold(nickname)
         user = User(nickname)
         user.set_nickname(nickname, nickname_lower)
         self.users[nickname_lower] = user
     def get_user(self, nickname: str) -> User:
-        nickname_lower = self.casemap_lower(nickname)
+        nickname_lower = self.casefold(nickname)
         if not nickname_lower in self.users:
             self.add_user(nickname)
         return self.users[nickname_lower]
@@ -82,9 +82,9 @@ class Server(Named):
     def is_channel(self, target: str) -> bool:
         return target[:1] in self.isupport.chantypes
     def has_channel(self, name: str) -> bool:
-        return self.casemap_lower(name) in self.channels
+        return self.casefold(name) in self.channels
     def get_channel(self, name: str) -> Optional[Channel]:
-        return self.channels.get(self.casemap_lower(name), None)
+        return self.channels.get(self.casefold(name), None)
 
     def user_join(self, channel: Channel, user: User) -> ChannelUser:
         channel_user = ChannelUser(channel, user)
@@ -119,11 +119,11 @@ class Server(Named):
     @line_handler("NICK")
     def handle_NICK(self, line: Line):
         new_nickname = line.params[0]
-        nickname_lower = self.casemap_lower(line.hostmask.nickname)
+        nickname_lower = self.casefold(line.hostmask.nickname)
 
         if nickname_lower in self.users:
             user = self.users.pop(nickname_lower)
-            new_nickname_lower = self.casemap_lower(new_nickname)
+            new_nickname_lower = self.casefold(new_nickname)
             user.set_nickname(new_nickname, new_nickname_lower)
             self.users[new_nickname_lower] = user
         if line.hostmask.nickname == self.nickname:
@@ -136,8 +136,8 @@ class Server(Named):
         account = line.params[1].strip("*") if extended else None
         realname = line.params[2] if extended else None
 
-        channel_lower = self.casemap_lower(line.params[0])
-        if self.casemap_equals(line.hostmask.nickname, self.nickname):
+        channel_lower = self.casefold(line.params[0])
+        if self.casefold_equals(line.hostmask.nickname, self.nickname):
             if not channel_lower in self.channels:
                 channel = Channel(line.params[0])
                 self.channels[channel_lower] = channel
@@ -164,10 +164,10 @@ class Server(Named):
             self.user_join(channel, user)
 
     def _handle_part(self, nickname, channel_name):
-        channel_lower = self.casemap_lower(channel_name)
+        channel_lower = self.casefold(channel_name)
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
-            if self.casemap_equals(nickname, self.nickname):
+            if self.casefold_equals(nickname, self.nickname):
                 del self.channels[channel_lower]
                 channel_users = self.channel_users.pop(channel)
 
@@ -175,9 +175,9 @@ class Server(Named):
                     self.user_channels[user].remove(channel)
                     if not self.user_channels[user]:
                         del self.user_channels[user]
-                        del self.users[self.casemap_lower(user.nickname)]
+                        del self.users[self.casefold(user.nickname)]
             else:
-                nickname_lower = self.casemap_lower(nickname)
+                nickname_lower = self.casefold(nickname)
                 if nickname_lower in self.users:
                     user = self.users[nickname_lower]
                     self.user_channels[user].remove(channel)
@@ -204,7 +204,7 @@ class Server(Named):
         if line.hostmask.nickname == self.nickname:
             self._self_quit()
         else:
-            nickname_lower = self.casemap_lower(line.hostmask.nickname)
+            nickname_lower = self.casefold(line.hostmask.nickname)
             if nickname_lower in self.users:
                 user = self.users.pop(nickname_lower)
                 for channel in self.user_channels[user]:
@@ -218,7 +218,7 @@ class Server(Named):
     @line_handler("353")
     # channel's user list, "NAMES #channel" response (and on-join)
     def handle_353(self, line: Line):
-        channel_lower = self.casemap_lower(line.params[2])
+        channel_lower = self.casefold(line.params[2])
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
             nicknames = list(filter(bool, line.params[3].split(" ")))
@@ -232,7 +232,7 @@ class Server(Named):
                         break
 
                 hostmask = Hostmask.from_source(nickname[len(modes):])
-                nickname_lower = self.casemap_lower(hostmask.nickname)
+                nickname_lower = self.casefold(hostmask.nickname)
                 if not nickname_lower in self.users:
                     self.add_user(hostmask.nickname)
                 user = self.users[nickname_lower]
@@ -255,14 +255,14 @@ class Server(Named):
     @line_handler("329")
     # channel creation time, "MODE #channel" response (and on-join)
     def handle_329(self, line: Line):
-        channel_lower = self.casemap_lower(line.params[1])
+        channel_lower = self.casefold(line.params[1])
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
             channel.created = datetime.fromtimestamp(int(line.params[2]))
 
     @line_handler("TOPIC")
     def handle_TOPIC(self, line: Line):
-        channel_lower = self.casemap_lower(line.params[0])
+        channel_lower = self.casefold(line.params[0])
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
             channel.topic        = line.params[1]
@@ -272,13 +272,13 @@ class Server(Named):
     @line_handler("332")
     # topic text, "TOPIC #channel" response (and on-join)
     def handle_332(self, line: Line):
-        channel_lower = self.casemap_lower(line.params[1])
+        channel_lower = self.casefold(line.params[1])
         if channel_lower in self.channels:
             self.channels[channel_lower].topic = line.params[2]
     @line_handler("333")
     # topic setby, "TOPIC #channel" response (and on-join)
     def handle_333(self, line: Line):
-        channel_lower = self.casemap_lower(line.params[1])
+        channel_lower = self.casefold(line.params[1])
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
             channel.topic_setter = line.params[2]
@@ -291,7 +291,7 @@ class Server(Named):
         for add, char in modes:
             list_mode = char in self.isupport.chanmodes.list_modes
             if char in self.isupport.prefix.modes:
-                nickname_lower = self.casemap_lower(params.pop(0))
+                nickname_lower = self.casefold(params.pop(0))
                 if nickname_lower in self.users:
                     user = self.users[nickname_lower]
                     channel_user = self.channel_users[channel][user]
@@ -339,13 +339,13 @@ class Server(Named):
                 elif char in self.modes:
                     self.modes.remove(char)
         elif self.has_channel(target):
-            channel = self.channels[self.casemap_lower(target)]
+            channel = self.channels[self.casefold(target)]
             self._channel_modes(channel, modes, params)
 
     @line_handler("324")
     # channel modes, "MODE #channel" response (sometimes on-join?)
     def handle_324(self, line: Line):
-        channel_lower = self.casemap_lower(line.params[1])
+        channel_lower = self.casefold(line.params[1])
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
             modes   = [(True, char) for char in line.params[2].lstrip("+")]
@@ -367,7 +367,7 @@ class Server(Named):
             if line.hostmask.hostname:
                 self.hostname = line.hostmask.hostname
 
-        nickname_lower = self.casemap_lower(line.hostmask.nickname)
+        nickname_lower = self.casefold(line.hostmask.nickname)
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
             if line.hostmask.username:
@@ -396,7 +396,7 @@ class Server(Named):
             self.hostname = hostname
             self.realname = realname
 
-        nickname_lower = self.casemap_lower(line.params[5])
+        nickname_lower = self.casefold(line.params[5])
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
             user.username = username
@@ -416,7 +416,7 @@ class Server(Named):
             self.hostname = hostname
             self.realname = realname
 
-        nickname_lower = self.casemap_lower(nickname)
+        nickname_lower = self.casefold(nickname)
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
             user.username = username
@@ -431,7 +431,7 @@ class Server(Named):
             self.username = username
             self.hostname = hostname
 
-        nickname_lower = self.casemap_lower(line.hostmask.nickname)
+        nickname_lower = self.casefold(line.hostmask.nickname)
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
             user.username = username
@@ -443,7 +443,7 @@ class Server(Named):
         if line.hostmask.nickname == self.nickname:
             self.realname = realname
 
-        nickname_lower = self.casemap_lower(line.hostmask.nickname)
+        nickname_lower = self.casefold(line.hostmask.nickname)
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
             user.realname = realname
@@ -454,7 +454,7 @@ class Server(Named):
         if line.hostmask.nickname == self.nickname:
             self.away = away
 
-        nickname_lower = self.casemap_lower(line.hostmask.nickname)
+        nickname_lower = self.casefold(line.hostmask.nickname)
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
             user.away = away
@@ -465,7 +465,7 @@ class Server(Named):
         if line.hostmask.nickname == self.nickname:
             self.account = account
 
-        nickname_lower = self.casemap_lower(line.hostmask.nickname)
+        nickname_lower = self.casefold(line.hostmask.nickname)
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
             user.account = account

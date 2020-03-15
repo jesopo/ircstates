@@ -56,7 +56,7 @@ class ISUPPORTTest(unittest.TestCase):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         self.assertEqual(server.isupport.casemapping, "rfc1459")
-        lower = server.casemap_lower("ÀTEST[]~\\")
+        lower = server.casefold("ÀTEST[]~\\")
         self.assertEqual(lower, "Àtest{}^|")
 
     def test_ascii(self):
@@ -64,7 +64,7 @@ class ISUPPORTTest(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise("005 * CASEMAPPING=ascii *"))
         self.assertEqual(server.isupport.casemapping, "ascii")
-        lower = server.casemap_lower("ÀTEST[]~\\")
+        lower = server.casefold("ÀTEST[]~\\")
         self.assertEqual(lower, "Àtest[]~\\")
 
     def test_fallback_to_rfc1459(self):
@@ -72,5 +72,5 @@ class ISUPPORTTest(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise("005 * CASEMAPPING=asd *"))
         self.assertEqual(server.isupport.casemapping, "rfc1459")
-        lower = server.casemap_lower("ÀTEST[]~\\")
+        lower = server.casefold("ÀTEST[]~\\")
         self.assertEqual(lower, "Àtest{}^|")
