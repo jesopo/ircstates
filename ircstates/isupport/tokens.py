@@ -7,7 +7,7 @@ class ChanModes(object):
             setting_c_modes: List[str],
             setting_d_modes: List[str]):
 
-        self.list_modes =      list_modes
+        self.list_modes      =  list_modes
         self.setting_b_modes = setting_b_modes
         self.setting_c_modes = setting_c_modes
         self.setting_d_modes = setting_d_modes
@@ -16,7 +16,7 @@ class Prefix(object):
     def __init__(self,
             modes:    List[str],
             prefixes: List[str]):
-        self.modes =    modes
+        self.modes    = modes
         self.prefixes = prefixes
 
     def from_mode(self, mode: str) -> Optional[str]:
