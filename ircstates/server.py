@@ -1,6 +1,6 @@
 from typing import Callable, Dict, List, Optional, Set, Tuple
 from datetime import datetime
-from irctokens import build, Line, StatefulDecoder, StatefulEncoder
+from irctokens import build, Hostmask, Line, StatefulDecoder, StatefulEncoder
 
 from .named import Named
 from .user import User
@@ -29,21 +29,21 @@ class Server(Named):
         self.away:     Optional[str] = None
 
         self.modes: List[str] = []
-        self.motd: List[str]  = []
+        self.motd:  List[str] = []
 
         self._encoder = StatefulEncoder()
         self._decoder = StatefulDecoder()
 
-        self.users:    Dict[str, User]    = {}
-        self.channels: Dict[str, Channel] = {}
-        self.user_channels: Dict[User, Set[Channel]]        = {}
+        self.users:         Dict[str, User]                        = {}
+        self.channels:      Dict[str, Channel]                     = {}
+        self.user_channels: Dict[User, Set[Channel]]               = {}
         self.channel_users: Dict[Channel, Dict[User, ChannelUser]] = {}
 
         self.isupport = ISupport()
 
-        self._temp_caps: Dict[str, Optional[str]]     = {}
-        self.caps: Optional[Dict[str, Optional[str]]] = None
-        self.agreed_caps: List[str]                   = []
+        self._temp_caps:  Dict[str, Optional[str]]           = {}
+        self.caps:        Optional[Dict[str, Optional[str]]] = None
+        self.agreed_caps: List[str]                          = []
 
     def __repr__(self) -> str:
         return f"Server(name={self.name!r})"
@@ -75,12 +75,15 @@ class Server(Named):
 
     def has_user(self, nickname: str) -> bool:
         return self.casemap_lower(nickname) in self.users
+    def add_user(self, nickname: str):
+        nickname_lower = self.casemap_lower(nickname)
+        user = User(nickname)
+        user.set_nickname(nickname, nickname_lower)
+        self.users[nickname_lower] = user
     def get_user(self, nickname: str) -> User:
         nickname_lower = self.casemap_lower(nickname)
         if not nickname_lower in self.users:
-            user = User(nickname)
-            user.set_nickname(nickname, nickname_lower)
-            self.users[nickname_lower] = user
+            self.add_user(nickname)
         return self.users[nickname_lower]
 
     def is_channel(self, target: str) -> bool:
@@ -235,12 +238,27 @@ class Server(Named):
                         modes += mode
                     else:
                         break
-                nickname = nickname.replace(modes, "", 1)
 
-                user = self.get_user(nickname)
+                hostmask = Hostmask.from_source(nickname[len(modes):])
+                nickname_lower = self.casemap_lower(hostmask.nickname)
+                if not nickname_lower in self.users:
+                    self.add_user(hostmask.nickname)
+                user = self.users[nickname_lower]
                 channel_user = self.user_join(channel, user)
+
+                if hostmask.username:
+                    user.username = hostmask.username
+                    if hostmask.nickname == self.nickname:
+                        self.username = hostmask.username
+                if hostmask.hostname:
+                    user.hostname = hostmask.hostname
+                    if hostmask.nickname == self.nickname:
+                        self.hostname = hostmask.hostname
+
+
                 for mode in modes:
-                    channel_user.modes.add(mode)
+                    if not mode in channel_user.modes:
+                        channel_user.modes.append(mode)
 
     @line_handler("329")
     # channel creation time, "MODE #channel" response (and on-join)
@@ -280,7 +298,17 @@ class Server(Named):
             params: List[str]):
         for add, char in modes:
             list_mode = char in self.isupport.chanmodes.list_modes
-            if add and (
+            if char in self.isupport.prefix.modes:
+                nickname_lower = self.casemap_lower(params.pop(0))
+                if nickname_lower in self.users:
+                    user = self.users[nickname_lower]
+                    channel_user = self.channel_users[channel][user]
+                    if add:
+                        if not char in channel_user.modes:
+                            channel_user.modes.append(char)
+                    elif char in channel_user.modes:
+                        channel_user.modes.remove(char)
+            elif add and (
                     list_mode or
                     char in self.isupport.chanmodes.setting_b_modes or
                     char in self.isupport.chanmodes.setting_c_modes):

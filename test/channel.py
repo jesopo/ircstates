@@ -120,3 +120,30 @@ class ChannelTestCreation(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise("329 * #chan 1584041889"))
         self.assertEqual(server.channels["#chan"].created, dt)
+
+class ChannelTestNAMES(unittest.TestCase):
+    def test(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise("353 * * #chan :nickname @+other"))
+        self.assertIn("nickname", server.users)
+        self.assertIn("other", server.users)
+        user = server.users["other"]
+        self.assertIn(user, server.user_channels)
+        channel = server.channels["#chan"]
+        self.assertIn(user, server.channel_users[channel])
+        channel_user = server.channel_users[channel][user]
+        self.assertEqual(channel_user.modes, ["o", "v"])
+
+    def test_userhost_in_names(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(
+            "353 * * #chan :nickname!user@host other!user2@host2"))
+        self.assertEqual(server.username, "user")
+        self.assertEqual(server.hostname, "host")
+        user = server.users["other"]
+        self.assertEqual(user.username, "user2")
+        self.assertEqual(user.hostname, "host2")
