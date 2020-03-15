@@ -69,8 +69,7 @@ class Server(Named):
     def has_user(self, nickname: str) -> bool:
         return self.casefold(nickname) in self.users
     def add_user(self, nickname: str, nickname_lower: str):
-        user = User(nickname)
-        user.set_nickname(nickname, nickname_lower)
+        user = User(nickname, nickname_lower)
         self.users[nickname_lower] = user
 
     def is_channel(self, target: str) -> bool:
