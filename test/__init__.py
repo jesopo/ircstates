@@ -4,3 +4,4 @@ from .mode     import *
 from .motd     import *
 from .cap      import *
 from .isupport import *
+from .casemap  import *

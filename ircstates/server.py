@@ -1,13 +1,14 @@
-from typing import Callable, Dict, List, Optional, Set, Tuple
-from datetime import datetime
+from typing    import Callable, Dict, List, Optional, Set, Tuple
+from datetime  import datetime
 from irctokens import build, Hostmask, Line, StatefulDecoder, StatefulEncoder
 
-from .named import Named
-from .user import User
-from .channel import Channel
+from .named        import Named
+from .user         import User
+from .channel      import Channel
 from .channel_user import ChannelUser
-from .isupport import ISupport
-from .decorators import line_handler_decorator
+from .isupport     import ISupport
+from .decorators   import line_handler_decorator
+from .casemap      import casefold
 
 LINE_HANDLERS: Dict[str, List[Callable[["Server", Line], None]]] = {}
 line_handler = line_handler_decorator(LINE_HANDLERS)
@@ -61,7 +62,7 @@ class Server(Named):
                 callback(self, line)
 
     def casemap_lower(self, s1: str):
-        return s1.lower()
+        return casefold(self.isupport.casemapping, s1)
     def casemap_equals(self, s1: str, s2: str):
         return self.casemap_lower(s1) == self.casemap_lower(s2)
 
