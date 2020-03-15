@@ -16,6 +16,31 @@ class ModeTestUMode(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise("MODE nickname -i"))
         self.assertEqual(server.modes, [])
 
+class ModeTestChannelPrefix(unittest.TestCase):
+    def test_add(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(
+            irctokens.tokenise("MODE #chan +ov nickname nickname"))
+        user = server.users["nickname"]
+        channel = server.channels["#chan"]
+        channel_user = server.channel_users[channel][user]
+        self.assertEqual(channel_user.modes, ["o", "v"])
+
+    def test_remove(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(
+            irctokens.tokenise("MODE #chan +ov nickname nickname"))
+        server.parse_tokens(
+            irctokens.tokenise("MODE #chan -ov nickname nickname"))
+        user = server.users["nickname"]
+        channel = server.channels["#chan"]
+        channel_user = server.channel_users[channel][user]
+        self.assertEqual(channel_user.modes, [])
+
 class ModeTestChannelList(unittest.TestCase):
     def test_add(self):
         server = ircstates.Server("test")
