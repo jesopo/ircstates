@@ -1,6 +1,8 @@
 from typing import Dict, List, Optional
 from .tokens import ChanModes, Prefix
 
+CASEMAPPINGS = ["rfc1459", "ascii"]
+
 class ISupport(object):
     raw: Dict[str, Optional[str]]
 
@@ -31,7 +33,8 @@ class ISupport(object):
                 self.modes = int(value) if value else -1
 
             elif key == "CASEMAPPING":
-                self.casemapping = value
+                if value in CASEMAPPINGS:
+                    self.casemapping = value
 
             elif key == "CHANTYPES":
                 self.chantypes = list(value)
