@@ -25,6 +25,7 @@ class Server(Named):
         self.username: Optional[str] = None
         self.hostname: Optional[str] = None
         self.realname: Optional[str] = None
+        self.account:  Optional[str] = None
         self.away:     Optional[str] = None
 
         self.modes: List[str] = []
@@ -134,6 +135,11 @@ class Server(Named):
 
     @line_handler("JOIN")
     def handle_JOIN(self, line: Line):
+        extended = len(line.params) == 3
+
+        account = line.params[1].strip("*") if extended else None
+        realname = line.params[2] if extended else None
+
         channel_lower = self.casemap_lower(line.params[0])
         if self.casemap_equals(line.hostmask.nickname, self.nickname):
             if not channel_lower in self.channels:
@@ -144,6 +150,9 @@ class Server(Named):
                 self.username = line.hostmask.username
             if line.hostmask.hostname:
                 self.hostname = line.hostmask.hostname
+            if extended:
+                self.account  = account
+                self.realname = realname
 
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
@@ -152,6 +161,9 @@ class Server(Named):
                 user.username = line.hostmask.username
             if line.hostmask.hostname:
                 user.hostname = line.hostmask.hostname
+            if extended:
+                user.account  = account
+                user.realname = realname
 
             self.user_join(channel, user)
 

@@ -49,6 +49,40 @@ class UserTestHostmaskJoin(unittest.TestCase):
         self.assertIsNone(user.username)
         self.assertEqual(user.hostname, "host")
 
+class UserTestExtendedJoin(unittest.TestCase):
+    def test_without_extended_join(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        self.assertIsNone(server.account)
+        self.assertIsNone(server.realname)
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
+        user = server.users["other"]
+        self.assertIsNone(user.account)
+        self.assertIsNone(user.realname)
+
+    def test_with_account(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan acc :realname"))
+        self.assertEqual(server.account, "acc")
+        self.assertEqual(server.realname, "realname")
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan acc2 :realname2"))
+        user = server.users["other"]
+        self.assertEqual(user.account, "acc2")
+        self.assertEqual(user.realname, "realname2")
+
+    def test_without_account(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan * :realname"))
+        self.assertEqual(server.account, "")
+        self.assertEqual(server.realname, "realname")
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan * :realname2"))
+        user = server.users["other"]
+        self.assertEqual(user.account, "")
+        self.assertEqual(user.realname, "realname2")
+
 class UserTestHostmaskPRIVMSG(unittest.TestCase):
     def test_both(self):
         server = ircstates.Server("test")
