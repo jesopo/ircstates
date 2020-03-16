@@ -56,6 +56,8 @@ class ISUPPORTTest(unittest.TestCase):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         self.assertEqual(server.isupport.casemapping, "rfc1459")
+        server.parse_tokens(irctokens.tokenise("005 * CASEMAPPING=rfc1459 *"))
+        self.assertEqual(server.isupport.casemapping, "rfc1459")
         lower = server.casefold("ÀTEST[]~\\")
         self.assertEqual(lower, "Àtest{}^|")
 
@@ -74,3 +76,69 @@ class ISUPPORTTest(unittest.TestCase):
         self.assertEqual(server.isupport.casemapping, "rfc1459")
         lower = server.casefold("ÀTEST[]~\\")
         self.assertEqual(lower, "Àtest{}^|")
+
+    def test_network(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        self.assertIsNone(server.isupport.network)
+        server.parse_tokens(irctokens.tokenise("005 * NETWORK=testnet *"))
+        self.assertEqual(server.isupport.network, "testnet")
+
+    def test_statusmsg(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        self.assertEqual(server.isupport.statusmsg, [])
+        server.parse_tokens(irctokens.tokenise("005 * STATUSMSG=&@ *"))
+        self.assertEqual(server.isupport.statusmsg, ["&", "@"])
+
+    def test_callerid(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        self.assertIsNone(server.isupport.callerid)
+        server.parse_tokens(irctokens.tokenise("005 * CALLERID=U *"))
+        self.assertEqual(server.isupport.callerid, "U")
+        server.parse_tokens(irctokens.tokenise("005 * CALLERID *"))
+        self.assertEqual(server.isupport.callerid, "g")
+
+    def test_excepts(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        self.assertIsNone(server.isupport.excepts)
+        server.parse_tokens(irctokens.tokenise("005 * EXCEPTS=U *"))
+        self.assertEqual(server.isupport.excepts, "U")
+        server.parse_tokens(irctokens.tokenise("005 * EXCEPTS *"))
+        self.assertEqual(server.isupport.excepts, "e")
+
+    def test_invex(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        self.assertIsNone(server.isupport.invex)
+        server.parse_tokens(irctokens.tokenise("005 * INVEX=U *"))
+        self.assertEqual(server.isupport.invex, "U")
+        server.parse_tokens(irctokens.tokenise("005 * INVEX *"))
+        self.assertEqual(server.isupport.invex, "I")
+
+    def test_whox(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        self.assertFalse(server.isupport.whox)
+        server.parse_tokens(irctokens.tokenise("005 * WHOX *"))
+        self.assertTrue(server.isupport.whox)
+
+    def test_monitor(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        self.assertIsNone(server.isupport.monitor)
+        server.parse_tokens(irctokens.tokenise("005 * MONITOR=123 *"))
+        self.assertEqual(server.isupport.monitor, 123)
+        server.parse_tokens(irctokens.tokenise("005 * MONITOR *"))
+        self.assertEqual(server.isupport.monitor, -1)
+
+    def test_watch(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        self.assertIsNone(server.isupport.watch)
+        server.parse_tokens(irctokens.tokenise("005 * WATCH=123 *"))
+        self.assertEqual(server.isupport.watch, 123)
+        server.parse_tokens(irctokens.tokenise("005 * WATCH *"))
+        self.assertEqual(server.isupport.watch, -1)
