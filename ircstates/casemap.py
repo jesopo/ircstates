@@ -1,10 +1,10 @@
 import string
 from typing import List
 
-ASCII_UPPER          = list(string.ascii_uppercase)
-ASCII_LOWER          = list(string.ascii_lowercase)
-RFC1459_UPPER        = ASCII_UPPER+list("[]~\\")
-RFC1459_LOWER        = ASCII_LOWER+list("{}^|")
+ASCII_UPPER    = list(string.ascii_uppercase)
+ASCII_LOWER    = list(string.ascii_lowercase)
+RFC1459_UPPER  = ASCII_UPPER+list("[]~\\")
+RFC1459_LOWER  = ASCII_LOWER+list("{}^|")
 
 def _replace(s: str, upper: List[str], lower: List[str]):
     for i, char in enumerate(upper):
