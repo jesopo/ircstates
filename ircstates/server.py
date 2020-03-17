@@ -360,6 +360,8 @@ class Server(Named):
                 self.modes.append(char)
 
     @line_handler("PRIVMSG")
+    @line_handler("NOTICE")
+    @line_handler("TAGMSG")
     def handle_PRIVMSG(self, line: Line):
         nickname_lower = self.casefold(line.hostmask.nickname)
         if nickname_lower == self.nickname_lower:
