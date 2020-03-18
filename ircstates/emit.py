@@ -1,3 +1,4 @@
+from typing import List
 from .user import User
 from .channel import Channel
 
@@ -34,6 +35,12 @@ class EmitSourceUser(EmitUser):
     pass
 class EmitTargetUser(EmitSourceUser):
     pass
+
+class EmitUsers(Emit):
+    def __init__(self, users: List[User]):
+        self.users = users
+    def __repr__(self) -> str:
+        return f"Users(count={len(self.users)})"
 
 class EmitChannel(Emit):
     def __init__(self, channel: Channel):

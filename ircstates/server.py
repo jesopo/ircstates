@@ -276,6 +276,9 @@ class Server(Named):
             channel = self.channels[channel_lower]
             emits.append(EmitChannel(channel))
             nicknames = list(filter(bool, line.params[3].split(" ")))
+            users: List[User] = []
+            emits.append(EmitUsers(users))
+
             for nickname in nicknames:
                 modes = ""
                 for char in nickname:
@@ -290,7 +293,7 @@ class Server(Named):
                 if not nickname_lower in self.users:
                     self.add_user(hostmask.nickname, nickname_lower)
                 user = self.users[nickname_lower]
-                emits.append(EmitUser(user))
+                users.append(user)
                 channel_user = self.user_join(channel, user)
 
                 if hostmask.username:
