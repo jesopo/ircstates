@@ -9,8 +9,9 @@ from .channel_user import ChannelUser
 from .isupport     import ISupport
 from .decorators   import line_handler_decorator
 from .casemap      import casefold
+from .emit         import *
 
-LINE_HANDLERS: Dict[str, List[Callable[["Server", Line], None]]] = {}
+LINE_HANDLERS: Dict[str, List[Callable[["Server", Line], List[Emit]]]] = {}
 line_handler = line_handler_decorator(LINE_HANDLERS)
 
 class ServerException(Exception):
@@ -57,9 +58,14 @@ class Server(Named):
         return lines
 
     def parse_tokens(self, line: Line):
+        all_emits: List[List[Emit]] = []
         if line.command in LINE_HANDLERS:
+            command_emit = EmitCommand(line.command)
             for callback in LINE_HANDLERS[line.command]:
-                callback(self, line)
+                emits = callback(self, line)
+                emits.insert(0, command_emit)
+                all_emits.append(emits)
+        return all_emits
 
     def casefold(self, s1: str):
         return casefold(self.isupport.casemapping, s1)
@@ -68,8 +74,10 @@ class Server(Named):
 
     def has_user(self, nickname: str) -> bool:
         return self.casefold(nickname) in self.users
+    def create_user(self, nickname: str, nickname_lower: str):
+        return User(nickname, nickname_lower)
     def add_user(self, nickname: str, nickname_lower: str):
-        user = User(nickname, nickname_lower)
+        user = self.create_user(nickname, nickname_lower)
         self.users[nickname_lower] = user
 
     def is_channel(self, target: str) -> bool:
@@ -88,41 +96,58 @@ class Server(Named):
         self.channel_users[channel][user] = channel_user
         return channel_user
 
+    def _emit(self) -> List[Emit]:
+        return []
+
     @line_handler("001")
     # first message reliably sent to us after registration is complete
     def handle_001(self, line: Line):
         self.nickname = line.params[0]
         self.nickname_lower = self.casefold(line.params[0])
+        return self._emit()
 
     @line_handler("005")
     # https://defs.ircdocs.horse/defs/isupport.html
     def handle_ISUPPORT(self, line: Line):
         self.isupport.tokens(line.params[1:-1])
+        return self._emit()
 
     @line_handler("375")
     # start of MOTD
     def handle_375(self, line: Line):
         self.motd.clear()
+        return self._emit()
     @line_handler("375")
     # start of MOTD
     @line_handler("372")
     # line of MOTD
     def handle_372(self, line: Line):
-        self.motd.append(line.params[1])
+        emits = self._emit()
+        text = line.params[1]
+        emits.append(EmitText(text))
+        self.motd.append(text)
+        return emits
 
     @line_handler("NICK")
     def handle_NICK(self, line: Line):
         new_nickname = line.params[0]
         nickname_lower = self.casefold(line.hostmask.nickname)
 
+        emits = self._emit()
+
         if nickname_lower in self.users:
             user = self.users.pop(nickname_lower)
+            emits.append(EmitSourceUser(user))
+
             new_nickname_lower = self.casefold(new_nickname)
             user.set_nickname(new_nickname, new_nickname_lower)
             self.users[new_nickname_lower] = user
         if nickname_lower == self.nickname_lower:
+            emits.append(EmitSourceSelf())
+
             self.nickname = new_nickname
             self.nickname_lower = self.casefold(new_nickname)
+        return emits
 
     @line_handler("JOIN")
     def handle_JOIN(self, line: Line):
@@ -131,9 +156,12 @@ class Server(Named):
         account = line.params[1].strip("*") if extended else None
         realname = line.params[2] if extended else None
 
+        emits = self._emit()
+
         channel_lower = self.casefold(line.params[0])
         nickname_lower = self.casefold(line.hostmask.nickname)
         if nickname_lower == self.nickname_lower:
+            emits.append(EmitSourceSelf())
             if not channel_lower in self.channels:
                 channel = Channel(line.params[0])
                 self.channels[channel_lower] = channel
@@ -148,10 +176,12 @@ class Server(Named):
 
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
+            emits.append(EmitChannel(channel))
             if not nickname_lower in self.users:
                 self.add_user(line.hostmask.nickname, nickname_lower)
 
             user = self.users[nickname_lower]
+            emits.append(EmitSourceUser(user))
             if line.hostmask.username:
                 user.username = line.hostmask.username
             if line.hostmask.hostname:
@@ -161,12 +191,23 @@ class Server(Named):
                 user.realname = realname
 
             self.user_join(channel, user)
+        return emits
 
-    def _handle_part(self, nickname, channel_name):
+    def _handle_part(self, line: Line,
+            nickname: str,
+            channel_name: str,
+            reason_i: int):
+        emits = self._emit()
         channel_lower = self.casefold(channel_name)
+        reason = line.params[reason_i] if line.params[reason_i:] else None
+        if not reason is None:
+            emits.append(EmitText(reason))
+
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
+            emits.append(EmitChannel(channel))
             if self.casefold_equals(nickname, self.nickname):
+                emits.append(EmitSourceSelf())
                 del self.channels[channel_lower]
                 channel_users = self.channel_users.pop(channel)
 
@@ -179,18 +220,21 @@ class Server(Named):
                 nickname_lower = self.casefold(nickname)
                 if nickname_lower in self.users:
                     user = self.users[nickname_lower]
+                    emits.append(EmitSourceUser(user))
                     self.user_channels[user].remove(channel)
                     if not self.user_channels[user]:
                         del self.users[nickname_lower]
                         del self.user_channels[user]
                     del self.channel_users[channel][user]
+        return emits
 
     @line_handler("PART")
     def handle_PART(self, line: Line):
-        self._handle_part(line.hostmask.nickname, line.params[0])
+        return self._handle_part(line, line.hostmask.nickname, line.params[0],
+            1)
     @line_handler("KICK")
     def handle_KICK(self, line: Line):
-        self._handle_part(line.params[1], line.params[0])
+        return self._handle_part(line, line.params[1], line.params[0], 2)
 
     def _self_quit(self):
         self.users.clear()
@@ -200,26 +244,37 @@ class Server(Named):
 
     @line_handler("QUIT")
     def handle_quit(self, line: Line):
+        emits = self._emit()
         nickname_lower = self.casefold(line.hostmask.nickname)
+        reason = line.params[0] if line.params else None
+        if not reason is None:
+            emits.append(EmitText(reason))
+
         if nickname_lower == self.nickname_lower:
+            emits.append(EmitSourceSelf())
             self._self_quit()
         else:
             if nickname_lower in self.users:
                 user = self.users.pop(nickname_lower)
+                emits.append(EmitSourceUser(user))
                 for channel in self.user_channels[user]:
                     del self.channel_users[channel][user]
                 del self.user_channels[user]
+        return emits
 
     @line_handler("ERROR")
     def handle_ERROR(self, line: Line):
         self._self_quit()
+        return self._emit()
 
     @line_handler("353")
     # channel's user list, "NAMES #channel" response (and on-join)
     def handle_353(self, line: Line):
+        emits = self._emit()
         channel_lower = self.casefold(line.params[2])
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
+            emits.append(EmitChannel(channel))
             nicknames = list(filter(bool, line.params[3].split(" ")))
             for nickname in nicknames:
                 modes = ""
@@ -235,6 +290,7 @@ class Server(Named):
                 if not nickname_lower in self.users:
                     self.add_user(hostmask.nickname, nickname_lower)
                 user = self.users[nickname_lower]
+                emits.append(EmitUser(user))
                 channel_user = self.user_join(channel, user)
 
                 if hostmask.username:
@@ -250,38 +306,52 @@ class Server(Named):
                 for mode in modes:
                     if not mode in channel_user.modes:
                         channel_user.modes.append(mode)
+        return emits
 
     @line_handler("329")
     # channel creation time, "MODE #channel" response (and on-join)
     def handle_329(self, line: Line):
+        emits = self._emit()
         channel_lower = self.casefold(line.params[1])
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
+            emits.append(EmitChannel(channel))
             channel.created = datetime.fromtimestamp(int(line.params[2]))
+        return emits
 
     @line_handler("TOPIC")
     def handle_TOPIC(self, line: Line):
+        emits = self._emit()
         channel_lower = self.casefold(line.params[0])
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
+            emits.append(EmitChannel(channel))
             channel.topic        = line.params[1]
             channel.topic_setter = str(line.hostmask)
             channel.topic_time   = datetime.utcnow()
+        return emits
 
     @line_handler("332")
     # topic text, "TOPIC #channel" response (and on-join)
     def handle_332(self, line: Line):
-        channel_lower = self.casefold(line.params[1])
-        if channel_lower in self.channels:
-            self.channels[channel_lower].topic = line.params[2]
-    @line_handler("333")
-    # topic setby, "TOPIC #channel" response (and on-join)
-    def handle_333(self, line: Line):
+        emits = self._emit()
         channel_lower = self.casefold(line.params[1])
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
+            emits.append(EmitChannel(channel))
+            self.channels[channel_lower].topic = line.params[2]
+        return emits
+    @line_handler("333")
+    # topic setby, "TOPIC #channel" response (and on-join)
+    def handle_333(self, line: Line):
+        emits = self._emit()
+        channel_lower = self.casefold(line.params[1])
+        if channel_lower in self.channels:
+            channel = self.channels[channel_lower]
+            emits.append(EmitChannel(channel))
             channel.topic_setter = line.params[2]
             channel.topic_time   = datetime.fromtimestamp(int(line.params[3]))
+        return emits
 
     def _channel_modes(self,
             channel: Channel,
@@ -315,6 +385,7 @@ class Server(Named):
 
     @line_handler("MODE")
     def handle_MODE(self, line: Line):
+        emits = self._emit()
         target     = line.params[0]
         modes_str  = line.params[1]
         params     = line.params[2:].copy()
@@ -332,6 +403,7 @@ class Server(Named):
 
         target_lower = self.casefold(target)
         if target_lower == self.nickname_lower:
+            emits.append(EmitTargetSelf())
             for add, char in modes:
                 if add:
                     if not char in self.modes:
@@ -340,17 +412,22 @@ class Server(Named):
                     self.modes.remove(char)
         elif target_lower in self.channels:
             channel = self.channels[self.casefold(target)]
+            emits.append(EmitChannel(channel))
             self._channel_modes(channel, modes, params)
+        return emits
 
     @line_handler("324")
     # channel modes, "MODE #channel" response (sometimes on-join?)
     def handle_324(self, line: Line):
+        emits = self._emit()
         channel_lower = self.casefold(line.params[1])
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
+            emits.append(EmitChannel(channel))
             modes   = [(True, char) for char in line.params[2].lstrip("+")]
             params  = line.params[3:]
             self._channel_modes(channel, modes, params)
+        return emits
 
     @line_handler("211")
     # our own user modes, "MODE nickname" response (sometimes on-connect?)
@@ -358,13 +435,20 @@ class Server(Named):
         for char in line.params[1].lstrip("+"):
             if not char in self.modes:
                 self.modes.append(char)
+        return self._emit()
 
     @line_handler("PRIVMSG")
     @line_handler("NOTICE")
     @line_handler("TAGMSG")
     def handle_PRIVMSG(self, line: Line):
+        emits = self._emit()
+        message = line.params[1] if line.params[1:] else None
+        if not message is None:
+            emits.append(EmitText(message))
+
         nickname_lower = self.casefold(line.hostmask.nickname)
         if nickname_lower == self.nickname_lower:
+            emits.append(EmitSourceSelf())
             if line.hostmask.username:
                 self.username = line.hostmask.username
             if line.hostmask.hostname:
@@ -372,10 +456,32 @@ class Server(Named):
 
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
-            if line.hostmask.username:
-                user.username = line.hostmask.username
-            if line.hostmask.hostname:
-                user.hostname = line.hostmask.hostname
+        else:
+            user = self.create_user(line.hostmask.nickname, nickname_lower)
+        emits.append(EmitSourceUser(user))
+        if line.hostmask.username:
+            user.username = line.hostmask.username
+        if line.hostmask.hostname:
+            user.hostname = line.hostmask.hostname
+
+        target_raw = target = line.params[0]
+        statusmsg = []
+        while target:
+            if target[0] in self.isupport.statusmsg:
+                statusmsg.append(target[0])
+                target = target[1:]
+            else:
+                break
+        emits.append(EmitTarget(target_raw))
+
+        target_lower = self.casefold(target)
+        if self.is_channel(target):
+            if target_lower in self.channels:
+                channel = self.channels[target_lower]
+                emits.append(EmitChannel(channel))
+        elif target_lower == self.nickname_lower:
+            emits.append(EmitTargetSelf())
+        return emits
 
     @line_handler("396")
     # our own hostname, sometimes username@hostname, when it changes
@@ -384,10 +490,13 @@ class Server(Named):
         self.hostname = hostname
         if username:
             self.username = username
+        return self._emit()
 
     @line_handler("352")
     # WHO line, "WHO #channel|nickname" response
     def handle_352(self, line: Line):
+        emits = self._emit()
+        emits.append(EmitTarget(line.params[1]))
         nickname = line.params[5]
         username = line.params[2]
         hostname = line.params[3]
@@ -395,19 +504,23 @@ class Server(Named):
 
         nickname_lower = self.casefold(line.params[5])
         if nickname_lower == self.nickname_lower:
+            emits.append(EmitSelf())
             self.username = username
             self.hostname = hostname
             self.realname = realname
 
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
+            emits.append(EmitUser(user))
             user.username = username
             user.hostname = hostname
             user.realname = realname
+        return emits
 
     @line_handler("311")
     # WHOIS "user" line, one of "WHOIS nickname" response lines
     def handle_311(self, line: Line):
+        emits = self._emit()
         nickname = line.params[1]
         username = line.params[2]
         hostname = line.params[3]
@@ -415,62 +528,81 @@ class Server(Named):
 
         nickname_lower = self.casefold(nickname)
         if nickname_lower == self.nickname_lower:
+            emits.append(EmitSelf())
             self.username = username
             self.hostname = hostname
             self.realname = realname
 
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
+            emits.append(EmitUser(user))
             user.username = username
             user.hostname = hostname
             user.realname = realname
+        return emits
 
     @line_handler("CHGHOST")
     def handle_CHGHOST(self, line: Line):
+        emits = self._emit()
         username = line.params[0]
         hostname = line.params[1]
         nickname_lower = self.casefold(line.hostmask.nickname)
         if nickname_lower == self.nickname_lower:
+            emits.append(EmitSourceSelf())
             self.username = username
             self.hostname = hostname
 
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
+            emits.append(EmitSourceUser(user))
             user.username = username
             user.hostname = hostname
+        return emits
 
     @line_handler("SETNAME")
     def handle_SETNAME(self, line: Line):
+        emits = self._emit()
         realname = line.params[0]
         nickname_lower = self.casefold(line.hostmask.nickname)
         if nickname_lower == self.nickname_lower:
+            emits.append(EmitSourceSelf())
             self.realname = realname
 
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
+            emits.append(EmitSourceUser(user))
             user.realname = realname
+        return emits
 
     @line_handler("AWAY")
     def handle_AWAY(self, line: Line):
+        emits = self._emit()
         away = line.params[0] if line.params else None
         nickname_lower = self.casefold(line.hostmask.nickname)
         if nickname_lower == self.nickname_lower:
+            emits.append(EmitSourceSelf())
             self.away = away
 
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
+            emits.append(EmitSourceUser(user))
             user.away = away
+        return emits
 
     @line_handler("ACCOUNT")
     def handle_ACCOUNT(self, line: Line):
+        emits = self._emit()
         account = line.params[0].strip("*")
         nickname_lower = self.casefold(line.hostmask.nickname)
         if nickname_lower == self.nickname_lower:
+            emits.append(EmitSourceSelf())
             self.account = account
 
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
+            emits.append(EmitSourceUser(user))
             user.account = account
+        return emits
 
     @line_handler("CAP")
     def handle_CAP(self, line: Line):
@@ -508,3 +640,4 @@ class Server(Named):
                         self.caps and
                         key in self.caps):
                     self.agreed_caps.append(key)
+        return self._emit()
