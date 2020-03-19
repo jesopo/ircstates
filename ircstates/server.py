@@ -58,7 +58,7 @@ class Server(Named):
         return lines
 
     def parse_tokens(self, line: Line):
-        all_emits: List[List[Emit]] = []
+        all_emits: List[Emits] = []
         if line.command in LINE_HANDLERS:
             for callback in LINE_HANDLERS[line.command]:
                 emits = callback(self, line)
