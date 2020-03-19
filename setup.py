@@ -17,7 +17,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/jesopo/ircstates",
     packages=setuptools.find_packages(),
-    package_data={"irctokens": ["py.typed"]},
+    package_data={"ircstates": ["py.typed"]},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
