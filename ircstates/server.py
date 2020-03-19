@@ -7,12 +7,12 @@ from .user         import User
 from .channel      import Channel
 from .channel_user import ChannelUser
 from .isupport     import ISupport
-from .decorators   import line_handler_decorator
+from .decorators   import handler_decorator
 from .casemap      import casefold
 from .emit         import *
 
 LINE_HANDLERS: Dict[str, List[Callable[["Server", Line], Emits]]] = {}
-line_handler = line_handler_decorator(LINE_HANDLERS)
+line_handler = handler_decorator(LINE_HANDLERS)
 
 class ServerException(Exception):
     pass
