@@ -62,7 +62,8 @@ class ChannelTestKick(unittest.TestCase):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
-        server.parse_tokens(irctokens.tokenise("KICK #chan nickname"))
+        server.parse_tokens(
+            irctokens.tokenise(":nickname KICK #chan nickname"))
         self.assertEqual(len(server.users), 0)
         self.assertEqual(len(server.channels), 0)
         self.assertEqual(len(server.user_channels), 0)
@@ -73,7 +74,7 @@ class ChannelTestKick(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
-        server.parse_tokens(irctokens.tokenise("KICK #chan other"))
+        server.parse_tokens(irctokens.tokenise(":nickname KICK #chan other"))
 
         user = server.users["nickname"]
         channel = server.channels["#chan"]

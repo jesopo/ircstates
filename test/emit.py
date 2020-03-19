@@ -8,18 +8,17 @@ class EmitTest(unittest.TestCase):
         emits = server.parse_tokens(
             irctokens.tokenise(":nickname JOIN #chan"))[0]
 
-        self.assertIn(ircstates.EmitCommand("JOIN"), emits)
-        self.assertIn(ircstates.EmitSourceSelf(), emits)
-        user = server.users["nickname"]
-        self.assertIn(ircstates.EmitSourceUser(user), emits)
-        channel = server.channels["#chan"]
-        self.assertIn(ircstates.EmitChannel(channel), emits)
+        self.assertEqual(emits.command, "JOIN")
+        self.assertEqual(emits.self,    True)
+        self.assertEqual(emits.user,    server.users["nickname"])
+        self.assertEqual(emits.channel, server.channels["#chan"])
 
         emits = server.parse_tokens(
             irctokens.tokenise(":other JOIN #chan"))[0]
-        self.assertNotIn(ircstates.EmitSourceSelf(), emits)
-        other = server.users["other"]
-        self.assertIn(ircstates.EmitSourceUser(other), emits)
+        self.assertEqual(emits.command, "JOIN")
+        self.assertEqual(emits.self,    None)
+        self.assertEqual(emits.user,    server.users["other"])
+        self.assertEqual(emits.channel, server.channels["#chan"])
 
     def test_privmsg(self):
         server = ircstates.Server("test")
@@ -27,21 +26,20 @@ class EmitTest(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         emits = server.parse_tokens(
             irctokens.tokenise(":nickname PRIVMSG #chan :hello"))[0]
-
-        self.assertIn(ircstates.EmitCommand("PRIVMSG"), emits)
-        self.assertIn(ircstates.EmitText("hello"), emits)
-        self.assertIn(ircstates.EmitSourceSelf(), emits)
-        user = server.users["nickname"]
-        self.assertIn(ircstates.EmitSourceUser(user), emits)
-        channel = server.channels["#chan"]
-        self.assertIn(ircstates.EmitChannel(channel), emits)
+        self.assertEqual(emits.command,     "PRIVMSG")
+        self.assertEqual(emits.text,        "hello")
+        self.assertEqual(emits.self_source, True)
+        self.assertEqual(emits.user,        server.users["nickname"])
+        self.assertEqual(emits.channel,     server.channels["#chan"])
 
         server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
         emits = server.parse_tokens(
-            irctokens.tokenise(":other PRIVMSG #chan :hello"))[0]
-        self.assertNotIn(ircstates.EmitSourceSelf(), emits)
-        other = server.users["other"]
-        self.assertIn(ircstates.EmitSourceUser(other), emits)
+            irctokens.tokenise(":other PRIVMSG #chan :hello2"))[0]
+        self.assertEqual(emits.command,     "PRIVMSG")
+        self.assertEqual(emits.text,        "hello2")
+        self.assertEqual(emits.self_source, None)
+        self.assertEqual(emits.user,        server.users["other"])
+        self.assertEqual(emits.channel,     server.channels["#chan"])
 
     def test_privmsg_nojoin(self):
         server = ircstates.Server("test")
@@ -51,10 +49,27 @@ class EmitTest(unittest.TestCase):
         emits = server.parse_tokens(
             irctokens.tokenise(":other PRIVMSG #chan :hello"))[0]
 
-        self.assertIn(ircstates.EmitCommand("PRIVMSG"), emits)
-        self.assertIn(ircstates.EmitText("hello"), emits)
-        self.assertNotIn(ircstates.EmitSourceSelf(), emits)
-        self.assertIn(ircstates.EmitSourceUser(
-            server.create_user("other", "other")), emits)
+        self.assertEqual(emits.command,     "PRIVMSG")
+        self.assertEqual(emits.text,        "hello")
+        self.assertEqual(emits.self_source, None)
+        self.assertIsNotNone(emits.user)
         channel = server.channels["#chan"]
-        self.assertIn(ircstates.EmitChannel(channel), emits)
+        self.assertEqual(emits.channel,     channel)
+
+    def test_kick(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        user = server.users["nickname"]
+        channel = server.channels["#chan"]
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
+        user_other = server.users["other"]
+        emits = server.parse_tokens(
+            irctokens.tokenise(":nickname KICK #chan other :reason"))[0]
+
+        self.assertEqual(emits.command,     "KICK")
+        self.assertEqual(emits.text,        "reason")
+        self.assertEqual(emits.self_source, True)
+        self.assertEqual(emits.user_source, user)
+        self.assertEqual(emits.user_target, user_other)
+        self.assertEqual(emits.channel,     channel)
