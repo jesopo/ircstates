@@ -24,6 +24,7 @@ class Server(Named):
         self.name = name
 
         self.nickname                = ""
+        self.nickname_lower          = ""
         self.username: Optional[str] = None
         self.hostname: Optional[str] = None
         self.realname: Optional[str] = None
@@ -467,7 +468,7 @@ class Server(Named):
     @line_handler("PRIVMSG")
     @line_handler("NOTICE")
     @line_handler("TAGMSG")
-    def handle_PRIVMSG(self, line: Line):
+    def handle_message(self, line: Line):
         emits = self._emit()
         message = line.params[1] if line.params[1:] else None
         if not message is None:
