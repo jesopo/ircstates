@@ -74,17 +74,17 @@ class Server(Named):
 
     def has_user(self, nickname: str) -> bool:
         return self.casefold(nickname) in self.users
-    def _create_user(self, nickname: str, nickname_lower: str):
+    def create_user(self, nickname: str, nickname_lower: str):
         return User(nickname, nickname_lower)
     def _add_user(self, nickname: str, nickname_lower: str):
-        user = self._create_user(nickname, nickname_lower)
+        user = self.create_user(nickname, nickname_lower)
         self.users[nickname_lower] = user
 
     def is_channel(self, target: str) -> bool:
         return target[:1] in self.isupport.chantypes
     def has_channel(self, name: str) -> bool:
         return self.casefold(name) in self.channels
-    def _create_channel(self, name: str) -> Channel:
+    def create_channel(self, name: str) -> Channel:
         return Channel(name)
     def get_channel(self, name: str) -> Optional[Channel]:
         return self.channels.get(self.casefold(name), None)
@@ -165,7 +165,7 @@ class Server(Named):
         if nickname_lower == self.nickname_lower:
             emits.self = True
             if not channel_lower in self.channels:
-                channel = self._create_channel(line.params[0])
+                channel = self.create_channel(line.params[0])
                 self.channels[channel_lower] = channel
                 self.channel_users[channel] = {}
             if line.hostmask.username:
@@ -258,7 +258,7 @@ class Server(Named):
             if kicker_lower in self.users:
                 emits.user_source = self.users[kicker_lower]
             else:
-                emits.user_source = self._create_user(line.hostmask.nickname,
+                emits.user_source = self.create_user(line.hostmask.nickname,
                     kicker_lower)
 
         return emits
@@ -487,7 +487,7 @@ class Server(Named):
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
         else:
-            user = self._create_user(line.hostmask.nickname, nickname_lower)
+            user = self.create_user(line.hostmask.nickname, nickname_lower)
         emits.user = user
 
         if line.hostmask.username:
