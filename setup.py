@@ -20,7 +20,7 @@ setuptools.setup(
     package_data={"ircstates": ["py.typed"]},
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Operating System :: POSIX",
         "Operating System :: Microsoft :: Windows",
