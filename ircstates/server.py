@@ -50,13 +50,14 @@ class Server(Named):
     def __repr__(self) -> str:
         return f"Server(name={self.name!r})"
 
-    def recv(self, data: bytes) -> List[Line]:
+    def recv(self, data: bytes) -> List[Tuple[Line, List[Emits]]]:
         lines = self._decoder.push(data)
         if lines is None:
             raise ServerDisconnectedException()
+        emits: List[List[Emits]] = []
         for line in lines:
-            self.parse_tokens(line)
-        return lines
+            emits.append(self.parse_tokens(line))
+        return list(zip(lines, emits))
 
     def parse_tokens(self, line: Line):
         all_emits: List[Emits] = []
