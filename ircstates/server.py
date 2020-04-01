@@ -639,9 +639,14 @@ class Server(Named):
 
     @line_handler("CAP")
     def _handle_CAP(self, line: Line) -> Emit:
+        self.has_cap = True
         subcommand = line.params[1].upper()
         multiline  = line.params[2] == "*"
         caps       = line.params[2 + (1 if multiline else 0)]
+
+        emit = self._emit()
+        emit.subcommand = subcommand
+        emit.finished   = not multiline
 
         tokens: Dict[str, Optional[str]] = {}
         for cap in filter(bool, caps.split(" ")):
@@ -670,4 +675,4 @@ class Server(Named):
                 elif (not key in self.agreed_caps and
                         key in self.available_caps):
                     self.agreed_caps.append(key)
-        return self._emit()
+        return emit

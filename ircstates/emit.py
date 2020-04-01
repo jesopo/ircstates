@@ -3,9 +3,12 @@ from .user import User
 from .channel import Channel
 
 class Emit(object):
-    command: Optional[str] = None
+    command:    Optional[str] = None
+    subcommand: Optional[str] = None
 
-    text:   Optional[str] = None
+    text: Optional[str] = None
+
+    finished: Optional[bool] = None
 
     self:        Optional[bool] = None
     self_source: Optional[bool] = None
