@@ -85,3 +85,7 @@ ChannelUser(user='nickname', channel='#chan', modes='ov')
 >>> channel_user.modes
 {'o', 'v'}
 ```
+
+## contact
+
+Come say hi at [#irctokens on irc.tilde.chat](https://web.tilde.chat/?join=%23irctokens)
