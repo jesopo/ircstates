@@ -2,7 +2,7 @@ from typing import List, Optional
 from .user import User
 from .channel import Channel
 
-class Emits(object):
+class Emit(object):
     command: Optional[str] = None
 
     text:   Optional[str] = None
