@@ -644,14 +644,18 @@ class Server(Named):
         multiline  = line.params[2] == "*"
         caps       = line.params[2 + (1 if multiline else 0)]
 
+
+        tokens:     Dict[str, Optional[str]] = {}
+        tokens_str: List[str]                = []
+        for cap in filter(bool, caps.split(" ")):
+            tokens_str.append(cap)
+            key, _, value = cap.partition("=")
+            tokens[key] = value or None
+
         emit = self._emit()
         emit.subcommand = subcommand
         emit.finished   = not multiline
-
-        tokens: Dict[str, Optional[str]] = {}
-        for cap in filter(bool, caps.split(" ")):
-            key, _, value = cap.partition("=")
-            tokens[key] = value or None
+        emit.tokens     = tokens_str
 
         if subcommand == "LS":
             self._temp_caps.update(tokens)

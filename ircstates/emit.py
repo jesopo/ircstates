@@ -6,7 +6,8 @@ class Emit(object):
     command:    Optional[str] = None
     subcommand: Optional[str] = None
 
-    text: Optional[str] = None
+    text:   Optional[str]       = None
+    tokens: Optional[List[str]] = None
 
     finished: Optional[bool] = None
 
