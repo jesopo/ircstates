@@ -43,9 +43,10 @@ class Server(Named):
 
         self.isupport = ISupport()
 
-        self._temp_caps:  Dict[str, Optional[str]]           = {}
-        self.caps:        Optional[Dict[str, Optional[str]]] = None
-        self.agreed_caps: List[str]                          = []
+        self.has_cap: bool = False
+        self._temp_caps:     Dict[str, Optional[str]] = {}
+        self.available_caps: Dict[str, Optional[str]] = {}
+        self.agreed_caps:    List[str]                = []
 
     def __repr__(self) -> str:
         return f"Server(name={self.name!r})"
@@ -650,18 +651,16 @@ class Server(Named):
         if subcommand == "LS":
             self._temp_caps.update(tokens)
             if not multiline:
-                self.caps = self._temp_caps.copy()
+                self.available_caps = self._temp_caps.copy()
                 self._temp_caps.clear()
         elif subcommand == "NEW":
-            if not self.caps is None:
-                self.caps.update(tokens)
+            self.available_caps.update(tokens)
         elif subcommand == "DEL":
-            if not self.caps is None:
-                for key in tokens.keys():
-                    if key in self.caps.keys():
-                        del self.caps[key]
-                        if key in self.agreed_caps:
-                            self.agreed_caps.remove(key)
+            for key in tokens.keys():
+                if key in self.available_caps.keys():
+                    del self.available_caps[key]
+                    if key in self.agreed_caps:
+                        self.agreed_caps.remove(key)
         elif subcommand == "ACK":
             for key in tokens.keys():
                 if key.startswith("-"):
@@ -669,7 +668,6 @@ class Server(Named):
                     if key in self.agreed_caps:
                         self.agreed_caps.remove(key)
                 elif (not key in self.agreed_caps and
-                        self.caps and
-                        key in self.caps):
+                        key in self.available_caps):
                     self.agreed_caps.append(key)
         return self._emit()
