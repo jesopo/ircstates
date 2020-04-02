@@ -44,9 +44,9 @@ class Server(Named):
         self.isupport = ISupport()
 
         self.has_cap: bool = False
-        self._temp_caps:     Dict[str, Optional[str]] = {}
-        self.available_caps: Dict[str, Optional[str]] = {}
-        self.agreed_caps:    List[str]                = []
+        self._temp_caps:     Dict[str, str] = {}
+        self.available_caps: Dict[str, str] = {}
+        self.agreed_caps:    List[str]      = []
 
     def __repr__(self) -> str:
         return f"Server(name={self.name!r})"
@@ -645,12 +645,12 @@ class Server(Named):
         caps       = line.params[2 + (1 if multiline else 0)]
 
 
-        tokens:     Dict[str, Optional[str]] = {}
-        tokens_str: List[str]                = []
+        tokens:     Dict[str, str] = {}
+        tokens_str: List[str]      = []
         for cap in filter(bool, caps.split(" ")):
             tokens_str.append(cap)
             key, _, value = cap.partition("=")
-            tokens[key] = value or None
+            tokens[key] = value
 
         emit = self._emit()
         emit.subcommand = subcommand
