@@ -31,6 +31,7 @@ class Server(Named):
         self.account:  Optional[str] = None
         self.away:     Optional[str] = None
 
+        self.registered = False
         self.modes: List[str] = []
         self.motd:  List[str] = []
 
@@ -108,6 +109,7 @@ class Server(Named):
     def _handle_001(self, line: Line) -> Emit:
         self.nickname = line.params[0]
         self.nickname_lower = self.casefold(line.params[0])
+        self.registered = True
         return self._emit()
 
     @line_handler("005")
