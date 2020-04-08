@@ -136,11 +136,11 @@ class ModeTestUserNumeric(unittest.TestCase):
     def test(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
-        server.parse_tokens(irctokens.tokenise("211 * +iw"))
+        server.parse_tokens(irctokens.tokenise("221 * +iw"))
         self.assertEqual(server.modes, ["i", "w"])
 
     def test_without_plus(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
-        server.parse_tokens(irctokens.tokenise("211 * iw"))
+        server.parse_tokens(irctokens.tokenise("221 * iw"))
         self.assertEqual(server.modes, ["i", "w"])
