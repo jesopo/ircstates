@@ -463,9 +463,9 @@ class Server(Named):
             self._channel_modes(channel, modes, params)
         return emit
 
-    @line_handler("211")
+    @line_handler("221")
     # our own user modes, "MODE nickname" response (sometimes on-connect?)
-    def _handle_211(self, line: Line) -> Emit:
+    def _handle_221(self, line: Line) -> Emit:
         for char in line.params[1].lstrip("+"):
             if not char in self.modes:
                 self.modes.append(char)
