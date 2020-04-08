@@ -10,6 +10,7 @@ from .isupport     import ISupport
 from .decorators   import handler_decorator
 from .casemap      import casefold
 from .emit         import *
+from .numerics     import NUMERIC_NUMBERS
 
 LINE_HANDLERS: Dict[str, List[Callable[["Server", Line], Emit]]] = {}
 line_handler = handler_decorator(LINE_HANDLERS)
@@ -63,11 +64,18 @@ class Server(Named):
 
     def parse_tokens(self, line: Line):
         emits: List[Emit] = []
-        if line.command in LINE_HANDLERS:
-            for callback in LINE_HANDLERS[line.command]:
-                emit = callback(self, line)
-                emit.command = line.command
-                emits.append(emit)
+        commands = [line.command]
+        if (line.command.isdigit() and
+                len(line.command) == 3 and
+                line.command in NUMERIC_NUMBERS):
+            commands.append(NUMERIC_NUMBERS[line.command])
+
+        for command in commands:
+            if command in LINE_HANDLERS:
+                for callback in LINE_HANDLERS[command]:
+                    emit = callback(self, line)
+                    emit.command = line.command
+                    emits.append(emit)
         return emits
 
     def casefold(self, s1: str):
@@ -104,30 +112,30 @@ class Server(Named):
     def _emit(self) -> Emit:
         return Emit()
 
-    @line_handler("001")
+    @line_handler("RPL_WELCOME")
     # first message reliably sent to us after registration is complete
-    def _handle_001(self, line: Line) -> Emit:
+    def _handle_welcome(self, line: Line) -> Emit:
         self.nickname = line.params[0]
         self.nickname_lower = self.casefold(line.params[0])
         self.registered = True
         return self._emit()
 
-    @line_handler("005")
+    @line_handler("RPL_ISUPPORT")
     # https://defs.ircdocs.horse/defs/isupport.html
     def _handle_ISUPPORT(self, line: Line) -> Emit:
         self.isupport.tokens(line.params[1:-1])
         return self._emit()
 
-    @line_handler("375")
+    @line_handler("RPL_MOTDSTART")
     # start of MOTD
-    def _handle_375(self, line: Line) -> Emit:
+    def _handle_motd_start(self, line: Line) -> Emit:
         self.motd.clear()
         return self._emit()
-    @line_handler("375")
+    @line_handler("RPL_MOTDSTART")
     # start of MOTD
-    @line_handler("372")
+    @line_handler("RPL_MOTD")
     # line of MOTD
-    def _handle_372(self, line: Line) -> Emit:
+    def _handle_motd_line(self, line: Line) -> Emit:
         emit = self._emit()
         text = line.params[1]
         emit.text = text
@@ -298,9 +306,9 @@ class Server(Named):
         self._self_quit()
         return self._emit()
 
-    @line_handler("353")
+    @line_handler("RPL_NAMREPLY")
     # channel's user list, "NAMES #channel" response (and on-join)
-    def _handle_353(self, line: Line) -> Emit:
+    def _handle_names(self, line: Line) -> Emit:
         emit = self._emit()
         channel_lower = self.casefold(line.params[2])
         if channel_lower in self.channels:
@@ -342,9 +350,9 @@ class Server(Named):
                         channel_user.modes.append(mode)
         return emit
 
-    @line_handler("329")
+    @line_handler("RPL_CREATIONTIME")
     # channel creation time, "MODE #channel" response (and on-join)
-    def _handle_329(self, line: Line) -> Emit:
+    def _handle_creation_time(self, line: Line) -> Emit:
         emit = self._emit()
         channel_lower = self.casefold(line.params[1])
         if channel_lower in self.channels:
@@ -365,9 +373,9 @@ class Server(Named):
             channel.topic_time   = datetime.utcnow()
         return emit
 
-    @line_handler("332")
+    @line_handler("RPL_TOPIC")
     # topic text, "TOPIC #channel" response (and on-join)
-    def _handle_332(self, line: Line) -> Emit:
+    def _handle_topic_num(self, line: Line) -> Emit:
         emit = self._emit()
         channel_lower = self.casefold(line.params[1])
         if channel_lower in self.channels:
@@ -375,9 +383,9 @@ class Server(Named):
             emit.channel = channel
             self.channels[channel_lower].topic = line.params[2]
         return emit
-    @line_handler("333")
+    @line_handler("RPL_TOPICWHOTIME")
     # topic setby, "TOPIC #channel" response (and on-join)
-    def _handle_333(self, line: Line) -> Emit:
+    def _handle_topic_time(self, line: Line) -> Emit:
         emit = self._emit()
         channel_lower = self.casefold(line.params[1])
         if channel_lower in self.channels:
@@ -450,9 +458,9 @@ class Server(Named):
             self._channel_modes(channel, modes, params)
         return emit
 
-    @line_handler("324")
+    @line_handler("RPL_CHANNELMODEIS")
     # channel modes, "MODE #channel" response (sometimes on-join?)
-    def _handle_324(self, line: Line) -> Emit:
+    def _handle_channelmodeis(self, line: Line) -> Emit:
         emit = self._emit()
         channel_lower = self.casefold(line.params[1])
         if channel_lower in self.channels:
@@ -463,9 +471,9 @@ class Server(Named):
             self._channel_modes(channel, modes, params)
         return emit
 
-    @line_handler("221")
+    @line_handler("RPL_UMODEIS")
     # our own user modes, "MODE nickname" response (sometimes on-connect?)
-    def _handle_221(self, line: Line) -> Emit:
+    def _handle_umodeis(self, line: Line) -> Emit:
         for char in line.params[1].lstrip("+"):
             if not char in self.modes:
                 self.modes.append(char)
@@ -518,18 +526,18 @@ class Server(Named):
             emit.self_target = True
         return emit
 
-    @line_handler("396")
+    @line_handler("RPL_VISIBLEHOST")
     # our own hostname, sometimes username@hostname, when it changes
-    def _handle_396(self, line: Line) -> Emit:
+    def _handle_visiblehost(self, line: Line) -> Emit:
         username, _, hostname = line.params[1].rpartition("@")
         self.hostname = hostname
         if username:
             self.username = username
         return self._emit()
 
-    @line_handler("352")
+    @line_handler("RPL_WHOREPLY")
     # WHO line, "WHO #channel|nickname" response
-    def _handle_352(self, line: Line) -> Emit:
+    def _handle_who(self, line: Line) -> Emit:
         emit = self._emit()
         emit.target = line.params[1]
         nickname = line.params[5]
@@ -552,9 +560,9 @@ class Server(Named):
             user.realname = realname
         return emit
 
-    @line_handler("311")
+    @line_handler("RPL_WHOISUSER")
     # WHOIS "user" line, one of "WHOIS nickname" response lines
-    def _handle_311(self, line: Line) -> Emit:
+    def _handle_whoisuser(self, line: Line) -> Emit:
         emit = self._emit()
         nickname = line.params[1]
         username = line.params[2]
