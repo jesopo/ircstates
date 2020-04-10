@@ -73,3 +73,14 @@ class EmitTest(unittest.TestCase):
         self.assertEqual(emits.user_source, user)
         self.assertEqual(emits.user_target, user_other)
         self.assertEqual(emits.channel,     channel)
+
+    def test_mode(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        emit = server.parse_tokens(
+            irctokens.tokenise("MODE nickname x+i-i+wi-wi"))[0]
+
+        self.assertEqual(emit.command, "MODE")
+        self.assertTrue(emit.self_target)
+        self.assertEqual(emit.tokens,
+            ["+x", "+i", "-i", "+w", "+i", "-w", "-i"])
