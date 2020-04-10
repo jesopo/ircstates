@@ -432,16 +432,18 @@ class Server(Named):
         modes_str  = line.params[1]
         params     = line.params[2:].copy()
 
-        modifier                      = True
+        modifier                      = "+"
         modes: List[Tuple[bool, str]] = []
+        tokens: List[str]             = []
 
         for c in list(modes_str):
-            if c == "+":
-                modifier = True
-            elif c == "-":
-                modifier = False
+            if c in ["+", "-"]:
+                modifier = c
             else:
-                modes.append((modifier, c))
+                add = modifier == "+"
+                modes.append((add, c))
+                tokens.append(f"{modifier}{c}")
+        emit.tokens = tokens
 
         target_lower = self.casefold(target)
         if target_lower == self.nickname_lower:
