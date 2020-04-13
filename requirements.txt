@@ -1,1 +1,1 @@
-irctokens ==0.9.3
+irctokens ==0.9.4
