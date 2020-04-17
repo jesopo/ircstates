@@ -82,11 +82,11 @@ class Server(Named):
         return casefold(self.isupport.casemapping, s1)
     def casefold_equals(self, s1: str, s2: str):
         return self.casefold(s1) == self.casefold(s2)
+    def is_me(self, nickname: str):
+        return self.casefold(nickname) == self.nickname_lower
 
     def has_user(self, nickname: str) -> bool:
         return self.casefold(nickname) in self.users
-    def create_user(self, nickname: str, nickname_lower: str):
-        return User(nickname, nickname_lower)
     def _add_user(self, nickname: str, nickname_lower: str):
         user = self.create_user(nickname, nickname_lower)
         self.users[nickname_lower] = user
@@ -95,10 +95,13 @@ class Server(Named):
         return target[:1] in self.isupport.chantypes
     def has_channel(self, name: str) -> bool:
         return self.casefold(name) in self.channels
-    def create_channel(self, name: str) -> Channel:
-        return Channel(name)
     def get_channel(self, name: str) -> Optional[Channel]:
         return self.channels.get(self.casefold(name), None)
+
+    def create_user(self, nickname: str, nickname_lower: str):
+        return User(nickname, nickname_lower)
+    def create_channel(self, name: str) -> Channel:
+        return Channel(name)
 
     def _user_join(self, channel: Channel, user: User) -> ChannelUser:
         channel_user = ChannelUser(channel, user)

@@ -1,40 +1,45 @@
-NUMERIC_NUMBERS = {}
-NUMERIC_NAMES = {}
+from typing import cast, Dict, List
+NUMERIC_NUMBERS: Dict[str, str] = {}
 
-def _numeric(number: str, name: str):
-    NUMERIC_NUMBERS[number] = name
-    NUMERIC_NAMES[name]     = number
+RPL_WELCOME     = "001"
+RPL_ISUPPORT    = "005"
+RPL_MOTD        = "372"
+RPL_MOTDSTART   = "375"
+RPL_UMODEIS     = "221"
+RPL_VISIBLEHOST = "396"
 
-_numeric("001", "RPL_WELCOME")
-_numeric("005", "RPL_ISUPPORT")
-_numeric("372", "RPL_MOTD")
-_numeric("375", "RPL_MOTDSTART")
-_numeric("221", "RPL_UMODEIS")
-_numeric("396", "RPL_VISIBLEHOST")
+RPL_CHANNELMODEIS = "324"
+RPL_CREATIONTIME  = "329"
+RPL_TOPIC         = "332"
+RPL_TOPICWHOTIME  = "333"
 
-_numeric("324", "RPL_CHANNELMODEIS")
-_numeric("329", "RPL_CREATIONTIME")
-_numeric("332", "RPL_TOPIC")
-_numeric("333", "RPL_TOPICWHOTIME")
+RPL_WHOREPLY   = "352"
+RPL_NAMREPLY   = "353"
+RPL_ENDOFNAMES = "366"
 
-_numeric("352", "RPL_WHOREPLY")
-_numeric("353", "RPL_NAMREPLY")
-_numeric("366", "RPL_ENDOFNAMES")
+RPL_BANLIST        = "367"
+RPL_ENDOFBANLIST   = "367"
+RPL_QUIETLIST      = "728"
+RPL_ENDOFQUIETLIST = "729"
 
-_numeric("903", "RPL_SASLSUCCESS")
-_numeric("904", "ERR_SASLFAIL")
-_numeric("905", "ERR_SASLTOOLONG")
-_numeric("906", "ERR_SASLABORTED")
-_numeric("907", "ERR_SASLALREADY")
-_numeric("908", "RPL_SASLMECHS")
+RPL_SASLSUCCESS = "903"
+ERR_SASLFAIL    = "904"
+ERR_SASLTOOLONG = "905"
+ERR_SASLABORTED = "906"
+ERR_SASLALREADY = "907"
+RPL_SASLMECHS   = "908"
 
-_numeric("311", "RPL_WHOISUSER")
-_numeric("312", "RPL_WHOISSERVER")
-_numeric("313", "RPL_WHOISOPERATOR")
-_numeric("317", "RPL_WHOISIDLE")
-_numeric("319", "RPL_WHOISCHANNELS")
-_numeric("330", "RPL_WHOISACCOUNT")
-_numeric("378", "RPL_WHOISHOST")
-_numeric("379", "RPL_WHOISMODES")
-_numeric("671", "RPL_WHOISSECURE")
-_numeric("318", "RPL_ENDOFWHOIS")
+RPL_WHOISUSER     = "311"
+RPL_WHOISSERVER   = "312"
+RPL_WHOISOPERATOR = "313"
+RPL_WHOISIDLE     = "317"
+RPL_WHOISCHANNELS = "319"
+RPL_WHOISACCOUNT  = "330"
+RPL_WHOISHOST     = "378"
+RPL_WHOISMODES    = "379"
+RPL_WHOISSECURE   = "671"
+RPL_ENDOFWHOIS    = "318"
+
+for var, value in list(locals().items()):
+    if var.startswith("RPL_") or var.startswith("ERR_"):
+        NUMERIC_NUMBERS[cast(str, value)] = var
