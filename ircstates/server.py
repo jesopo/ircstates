@@ -10,7 +10,7 @@ from .isupport     import ISupport
 from .decorators   import handler_decorator
 from .casemap      import casefold
 from .emit         import *
-from .numerics     import NUMERIC_NUMBERS
+from .numerics     import *
 
 LINE_HANDLERS: Dict[str, List[Callable[["Server", Line], Emit]]] = {}
 line_handler = handler_decorator(LINE_HANDLERS)
@@ -64,18 +64,11 @@ class Server(Named):
 
     def parse_tokens(self, line: Line):
         emits: List[Emit] = []
-        commands = [line.command]
-        if (line.command.isdigit() and
-                len(line.command) == 3 and
-                line.command in NUMERIC_NUMBERS):
-            commands.append(NUMERIC_NUMBERS[line.command])
-
-        for command in commands:
-            if command in LINE_HANDLERS:
-                for callback in LINE_HANDLERS[command]:
-                    emit = callback(self, line)
-                    emit.command = line.command
-                    emits.append(emit)
+        if line.command in LINE_HANDLERS:
+            for callback in LINE_HANDLERS[line.command]:
+                emit = callback(self, line)
+                emit.command = line.command
+                emits.append(emit)
         return emits
 
     def casefold(self, s1: str):
@@ -115,7 +108,7 @@ class Server(Named):
     def _emit(self) -> Emit:
         return Emit()
 
-    @line_handler("RPL_WELCOME")
+    @line_handler(RPL_WELCOME)
     # first message reliably sent to us after registration is complete
     def _handle_welcome(self, line: Line) -> Emit:
         self.nickname = line.params[0]
@@ -123,20 +116,20 @@ class Server(Named):
         self.registered = True
         return self._emit()
 
-    @line_handler("RPL_ISUPPORT")
+    @line_handler(RPL_ISUPPORT)
     # https://defs.ircdocs.horse/defs/isupport.html
     def _handle_ISUPPORT(self, line: Line) -> Emit:
         self.isupport.tokens(line.params[1:-1])
         return self._emit()
 
-    @line_handler("RPL_MOTDSTART")
+    @line_handler(RPL_MOTDSTART)
     # start of MOTD
     def _handle_motd_start(self, line: Line) -> Emit:
         self.motd.clear()
         return self._emit()
-    @line_handler("RPL_MOTDSTART")
+    @line_handler(RPL_MOTDSTART)
     # start of MOTD
-    @line_handler("RPL_MOTD")
+    @line_handler(RPL_MOTD)
     # line of MOTD
     def _handle_motd_line(self, line: Line) -> Emit:
         emit = self._emit()
@@ -309,7 +302,7 @@ class Server(Named):
         self._self_quit()
         return self._emit()
 
-    @line_handler("RPL_NAMREPLY")
+    @line_handler(RPL_NAMREPLY)
     # channel's user list, "NAMES #channel" response (and on-join)
     def _handle_names(self, line: Line) -> Emit:
         emit = self._emit()
@@ -353,7 +346,7 @@ class Server(Named):
                         channel_user.modes.append(mode)
         return emit
 
-    @line_handler("RPL_CREATIONTIME")
+    @line_handler(RPL_CREATIONTIME)
     # channel creation time, "MODE #channel" response (and on-join)
     def _handle_creation_time(self, line: Line) -> Emit:
         emit = self._emit()
@@ -376,7 +369,7 @@ class Server(Named):
             channel.topic_time   = datetime.utcnow()
         return emit
 
-    @line_handler("RPL_TOPIC")
+    @line_handler(RPL_TOPIC)
     # topic text, "TOPIC #channel" response (and on-join)
     def _handle_topic_num(self, line: Line) -> Emit:
         emit = self._emit()
@@ -386,7 +379,7 @@ class Server(Named):
             emit.channel = channel
             self.channels[channel_lower].topic = line.params[2]
         return emit
-    @line_handler("RPL_TOPICWHOTIME")
+    @line_handler(RPL_TOPICWHOTIME)
     # topic setby, "TOPIC #channel" response (and on-join)
     def _handle_topic_time(self, line: Line) -> Emit:
         emit = self._emit()
@@ -463,7 +456,7 @@ class Server(Named):
             self._channel_modes(channel, modes, params)
         return emit
 
-    @line_handler("RPL_CHANNELMODEIS")
+    @line_handler(RPL_CHANNELMODEIS)
     # channel modes, "MODE #channel" response (sometimes on-join?)
     def _handle_channelmodeis(self, line: Line) -> Emit:
         emit = self._emit()
@@ -476,7 +469,7 @@ class Server(Named):
             self._channel_modes(channel, modes, params)
         return emit
 
-    @line_handler("RPL_UMODEIS")
+    @line_handler(RPL_UMODEIS)
     # our own user modes, "MODE nickname" response (sometimes on-connect?)
     def _handle_umodeis(self, line: Line) -> Emit:
         for char in line.params[1].lstrip("+"):
@@ -531,7 +524,7 @@ class Server(Named):
             emit.self_target = True
         return emit
 
-    @line_handler("RPL_VISIBLEHOST")
+    @line_handler(RPL_VISIBLEHOST)
     # our own hostname, sometimes username@hostname, when it changes
     def _handle_visiblehost(self, line: Line) -> Emit:
         username, _, hostname = line.params[1].rpartition("@")
@@ -540,7 +533,7 @@ class Server(Named):
             self.username = username
         return self._emit()
 
-    @line_handler("RPL_WHOREPLY")
+    @line_handler(RPL_WHOREPLY)
     # WHO line, "WHO #channel|nickname" response
     def _handle_who(self, line: Line) -> Emit:
         emit = self._emit()
@@ -565,7 +558,7 @@ class Server(Named):
             user.realname = realname
         return emit
 
-    @line_handler("RPL_WHOISUSER")
+    @line_handler(RPL_WHOISUSER)
     # WHOIS "user" line, one of "WHOIS nickname" response lines
     def _handle_whoisuser(self, line: Line) -> Emit:
         emit = self._emit()
