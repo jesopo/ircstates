@@ -20,6 +20,8 @@ class ServerException(Exception):
 class ServerDisconnectedException(ServerException):
     pass
 
+WHO_TYPE = "524" # randomly generated
+
 class Server(Named):
     def __init__(self, name: str):
         self.name = name
@@ -104,6 +106,9 @@ class Server(Named):
         self.user_channels[user].add(channel)
         self.channel_users[channel][user] = channel_user
         return channel_user
+
+    def prepare_whox(self, target: str):
+        return build("WHO", [target, f"n%ahinrtu,{WHO_TYPE}"])
 
     def _emit(self) -> Emit:
         return Emit()
@@ -556,6 +561,36 @@ class Server(Named):
             user.username = username
             user.hostname = hostname
             user.realname = realname
+        return emit
+
+    @line_handler(RPL_WHOSPCRPL)
+    # WHOX line, "WHO #channel|nickname" response; only listen for our "type"
+    def _handle_whox(self, line: Line) -> Emit:
+        emit = self._emit()
+        if line.params[1] == WHO_TYPE and len(line.params) == 8:
+            nickname_lower = self.casefold(line.params[5])
+            username = line.params[2]
+            hostname = line.params[4]
+            realname = line.params[7]
+
+            account: Optional[str] = None
+            if not line.params[6] == "0":
+                account = line.params[6]
+
+            if nickname_lower in self.users:
+                user = self.users[nickname_lower]
+                emit.user = user
+                user.username = username
+                user.hostname = hostname
+                user.realname = realname
+                user.account  = account
+            if nickname_lower == self.nickname_lower:
+                emit.self = True
+                self.username = username
+                self.hostname = hostname
+                self.realname = realname
+                self.account  = account
+
         return emit
 
     @line_handler(RPL_WHOISUSER)
