@@ -107,7 +107,7 @@ class Server(Named):
         self.channel_users[channel][user] = channel_user
         return channel_user
 
-    def prepare_whox(self, target: str):
+    def prepare_whox(self, target: str) -> Line:
         return build("WHO", [target, f"n%ahinrtu,{WHO_TYPE}"])
 
     def _emit(self) -> Emit:
