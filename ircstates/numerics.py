@@ -1,5 +1,3 @@
-from typing import cast, Dict, List
-NUMERIC_NUMBERS: Dict[str, str] = {}
 
 RPL_WELCOME     = "001"
 RPL_ISUPPORT    = "005"
@@ -40,7 +38,3 @@ RPL_WHOISHOST     = "378"
 RPL_WHOISMODES    = "379"
 RPL_WHOISSECURE   = "671"
 RPL_ENDOFWHOIS    = "318"
-
-for var, value in list(locals().items()):
-    if var.startswith("RPL_") or var.startswith("ERR_"):
-        NUMERIC_NUMBERS[cast(str, value)] = var
