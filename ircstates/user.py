@@ -1,5 +1,6 @@
 from typing import Optional, Set
 from .named import Named
+from .channel import Channel
 
 class User(Named):
     nickname:       str
@@ -12,6 +13,7 @@ class User(Named):
         self.realname: Optional[str] = None
         self.account:  Optional[str] = None
         self.away:     Optional[str] = None
+        self.channels: Set["Channel"] = set([])
 
     def __repr__(self) -> str:
         return f"User(nickname={self.nickname!r})"

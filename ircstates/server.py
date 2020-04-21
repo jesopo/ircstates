@@ -40,10 +40,8 @@ class Server(Named):
 
         self._decoder = StatefulDecoder()
 
-        self.users:         Dict[str, User]                        = {}
-        self.channels:      Dict[str, Channel]                     = {}
-        self.user_channels: Dict[User, Set[Channel]]               = {}
-        self.channel_users: Dict[Channel, Dict[User, ChannelUser]] = {}
+        self.users:    Dict[str, User]    = {}
+        self.channels: Dict[str, Channel] = {}
 
         self.isupport = ISupport()
 
@@ -100,11 +98,9 @@ class Server(Named):
 
     def _user_join(self, channel: Channel, user: User) -> ChannelUser:
         channel_user = ChannelUser(channel, user)
-        if not user in self.user_channels:
-            self.user_channels[user] =    set([])
 
-        self.user_channels[user].add(channel)
-        self.channel_users[channel][user] = channel_user
+        user.channels.add(channel)
+        channel.users[user.nickname_lower] = channel_user
         return channel_user
 
     def prepare_whox(self, target: str) -> Line:
@@ -180,7 +176,6 @@ class Server(Named):
             if not channel_lower in self.channels:
                 channel = self.create_channel(line.params[0])
                 self.channels[channel_lower] = channel
-                self.channel_users[channel] = {}
             if line.hostmask.username:
                 self.username = line.hostmask.username
             if line.hostmask.hostname:
@@ -226,22 +221,20 @@ class Server(Named):
             nickname_lower = self.casefold(nickname)
             if nickname_lower in self.users:
                 user = self.users[nickname_lower]
-                user = user
-                self.user_channels[user].remove(channel)
-                if not self.user_channels[user]:
+
+                user.channels.remove(channel)
+                del channel.users[user.nickname_lower]
+                if not user.channels:
                     del self.users[nickname_lower]
-                    del self.user_channels[user]
-                del self.channel_users[channel][user]
 
             if nickname_lower == self.nickname_lower:
                 del self.channels[channel_lower]
-                channel_users = self.channel_users.pop(channel)
 
-                for user, cuser in channel_users.items():
-                    self.user_channels[user].remove(channel)
-                    if not self.user_channels[user]:
-                        del self.user_channels[user]
-                        del self.users[self.casefold(user.nickname)]
+                for key, cuser in channel.users.items():
+                    ruser = cuser.user
+                    ruser.channels.remove(channel)
+                    if not ruser.channels:
+                        del self.users[ruser.nickname_lower]
 
         return emit, user
 
@@ -279,8 +272,6 @@ class Server(Named):
     def _self_quit(self):
         self.users.clear()
         self.channels.clear()
-        self.user_channels.clear()
-        self.channel_users.clear()
 
     @line_handler("QUIT")
     def _handle_quit(self, line: Line) -> Emit:
@@ -297,9 +288,8 @@ class Server(Named):
             if nickname_lower in self.users:
                 user = self.users.pop(nickname_lower)
                 emit.user = user
-                for channel in self.user_channels[user]:
-                    del self.channel_users[channel][user]
-                del self.user_channels[user]
+                for channel in user.channels:
+                    del channel.users[user.nickname_lower]
         return emit
 
     @line_handler("ERROR")
@@ -406,7 +396,7 @@ class Server(Named):
                 nickname_lower = self.casefold(params.pop(0))
                 if nickname_lower in self.users:
                     user = self.users[nickname_lower]
-                    channel_user = self.channel_users[channel][user]
+                    channel_user = channel.users[user.nickname_lower]
                     if add:
                         if not char in channel_user.modes:
                             channel_user.modes.append(char)

@@ -21,13 +21,10 @@ class CaseMapTestCommands(unittest.TestCase):
         self.assertIn("other", server.users)
         self.assertNotIn("Other", server.users)
         self.assertIn("#chan", server.channels)
+        self.assertNotIn("#Chan", server.channels)
+
         channel = server.channels["#chan"]
         self.assertEqual(channel.name, "#Chan")
-        user1 = server.users["nickname"]
-        user2 = server.users["other"]
-        self.assertIn(user1, server.channel_users[channel])
-        self.assertIn(user2, server.channel_users[channel])
-        self.assertEqual(len(server.channel_users[channel]), 2)
 
     def test_nick(self):
         server = ircstates.Server("test")

@@ -12,10 +12,13 @@ class ChannelTestJoin(unittest.TestCase):
         self.assertEqual(len(server.users), 1)
         self.assertEqual(len(server.channels), 1)
 
-        self.assertIn(server.channels["#chan"], server.channel_users)
-        self.assertIn(server.users["nickname"], server.user_channels)
-        self.assertEqual(len(server.user_channels), 1)
-        self.assertEqual(len(server.channel_users), 1)
+        user = server.users["nickname"]
+        channel = server.channels["#chan"]
+        self.assertIn(user.nickname_lower, channel.users)
+        channel_user = channel.users[user.nickname_lower]
+        self.assertEqual(channel_user.user, user)
+        self.assertEqual(channel_user.channel, channel)
+        self.assertEqual(user.channels, set([channel]))
 
     def test_other_join(self):
         server = ircstates.Server("test")
@@ -24,8 +27,11 @@ class ChannelTestJoin(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
         self.assertEqual(len(server.users), 2)
         self.assertIn("other", server.users)
-        self.assertEqual(len(server.user_channels), 2)
-        self.assertEqual(len(server.channel_users), 1)
+        channel = server.channels["#chan"]
+        self.assertEqual(len(channel.users), 2)
+
+        user = server.users["other"]
+        self.assertEqual(user.channels, set([channel]))
 
 class ChannelTestPart(unittest.TestCase):
     def test_self_part(self):
@@ -35,8 +41,6 @@ class ChannelTestPart(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise(":nickname PART #chan"))
         self.assertEqual(len(server.users), 0)
         self.assertEqual(len(server.channels), 0)
-        self.assertEqual(len(server.user_channels), 0)
-        self.assertEqual(len(server.channel_users), 0)
 
     def test_other_part(self):
         server = ircstates.Server("test")
@@ -47,15 +51,12 @@ class ChannelTestPart(unittest.TestCase):
 
         user = server.users["nickname"]
         channel = server.channels["#chan"]
+        channel_user = channel.users[user.nickname_lower]
 
-        self.assertEqual(len(server.users), 1)
-        self.assertEqual(len(server.channels), 1)
-        self.assertIn(user, server.user_channels)
-        self.assertEqual(len(server.user_channels[user]), 1)
-        self.assertIn(channel, server.channel_users)
-        self.assertEqual(len(server.channel_users), 1)
-        self.assertIn(user, server.channel_users[channel])
-        self.assertEqual(len(server.user_channels), 1)
+        self.assertEqual(server.users, {"nickname": user})
+        self.assertEqual(server.channels, {"#chan": channel})
+        self.assertEqual(user.channels, set([channel]))
+        self.assertEqual(channel.users, {"nickname": channel_user})
 
 class ChannelTestKick(unittest.TestCase):
     def test_self_kick(self):
@@ -66,8 +67,6 @@ class ChannelTestKick(unittest.TestCase):
             irctokens.tokenise(":nickname KICK #chan nickname"))
         self.assertEqual(len(server.users), 0)
         self.assertEqual(len(server.channels), 0)
-        self.assertEqual(len(server.user_channels), 0)
-        self.assertEqual(len(server.channel_users), 0)
 
     def test_other_kick(self):
         server = ircstates.Server("test")
@@ -78,15 +77,12 @@ class ChannelTestKick(unittest.TestCase):
 
         user = server.users["nickname"]
         channel = server.channels["#chan"]
+        channel_user = channel.users[user.nickname_lower]
 
         self.assertEqual(len(server.users), 1)
         self.assertEqual(len(server.channels), 1)
-        self.assertIn(user, server.user_channels)
-        self.assertEqual(len(server.user_channels[user]), 1)
-        self.assertIn(channel, server.channel_users)
-        self.assertEqual(len(server.channel_users), 1)
-        self.assertIn(user, server.channel_users[channel])
-        self.assertEqual(len(server.user_channels), 1)
+        self.assertEqual(user.channels, set([channel]))
+        self.assertEqual(channel.users, {user.nickname_lower: channel_user})
 
 class ChannelTestTopic(unittest.TestCase):
     def test_text(self):
@@ -130,12 +126,17 @@ class ChannelTestNAMES(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise("353 * * #chan :nickname @+other"))
         self.assertIn("nickname", server.users)
         self.assertIn("other", server.users)
+
         user = server.users["other"]
-        self.assertIn(user, server.user_channels)
         channel = server.channels["#chan"]
-        self.assertIn(user, server.channel_users[channel])
-        channel_user = server.channel_users[channel][user]
-        self.assertEqual(channel_user.modes, ["o", "v"])
+        channel_user_1 = channel.users[user.nickname_lower]
+        channel_user_2 = channel.users[server.nickname_lower]
+
+        self.assertEqual(channel.users, {
+            user.nickname_lower: channel_user_1,
+            server.nickname_lower: channel_user_2})
+        self.assertEqual(user.channels, set([channel]))
+        self.assertEqual(channel_user_1.modes, ["o", "v"])
 
     def test_userhost_in_names(self):
         server = ircstates.Server("test")

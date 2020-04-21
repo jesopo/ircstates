@@ -1,11 +1,10 @@
 from typing import List
-from .user import User
-from .channel import Channel
+from . import user, channel
 
 class ChannelUser(object):
     def __init__(self,
-            channel: Channel,
-            user:    User):
+            channel: "channel.Channel",
+            user:    "user.User"):
         self.channel          = channel
         self.user             = user
         self.modes: List[str] = []

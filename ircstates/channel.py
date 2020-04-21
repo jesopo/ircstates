@@ -1,10 +1,14 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Set
-from .named import Named
+
+from .named        import Named
+from .channel_user import ChannelUser
 
 class Channel(Named):
     def __init__(self, name: str):
         self.name = name
+
+        self.users: Dict[str, ChannelUser] = {}
 
         self.topic:        Optional[str]      = None
         self.topic_setter: Optional[str]      = None

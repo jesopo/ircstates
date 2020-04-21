@@ -25,7 +25,7 @@ class ModeTestChannelPrefix(unittest.TestCase):
             irctokens.tokenise("MODE #chan +ov nickname nickname"))
         user = server.users["nickname"]
         channel = server.channels["#chan"]
-        channel_user = server.channel_users[channel][user]
+        channel_user = channel.users[user.nickname_lower]
         self.assertEqual(channel_user.modes, ["o", "v"])
 
     def test_remove(self):
@@ -38,7 +38,7 @@ class ModeTestChannelPrefix(unittest.TestCase):
             irctokens.tokenise("MODE #chan -ov nickname nickname"))
         user = server.users["nickname"]
         channel = server.channels["#chan"]
-        channel_user = server.channel_users[channel][user]
+        channel_user = channel.users[user.nickname_lower]
         self.assertEqual(channel_user.modes, [])
 
 class ModeTestChannelList(unittest.TestCase):
