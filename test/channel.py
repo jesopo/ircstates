@@ -16,9 +16,7 @@ class ChannelTestJoin(unittest.TestCase):
         channel = server.channels["#chan"]
         self.assertIn(user.nickname_lower, channel.users)
         channel_user = channel.users[user.nickname_lower]
-        self.assertEqual(channel_user.user, user)
-        self.assertEqual(channel_user.channel, channel)
-        self.assertEqual(user.channels, set([channel]))
+        self.assertEqual(user.channels, set([channel.name_lower]))
 
     def test_other_join(self):
         server = ircstates.Server("test")
@@ -31,7 +29,7 @@ class ChannelTestJoin(unittest.TestCase):
         self.assertEqual(len(channel.users), 2)
 
         user = server.users["other"]
-        self.assertEqual(user.channels, set([channel]))
+        self.assertEqual(user.channels, set([channel.name_lower]))
 
 class ChannelTestPart(unittest.TestCase):
     def test_self_part(self):
@@ -55,7 +53,7 @@ class ChannelTestPart(unittest.TestCase):
 
         self.assertEqual(server.users, {"nickname": user})
         self.assertEqual(server.channels, {"#chan": channel})
-        self.assertEqual(user.channels, set([channel]))
+        self.assertEqual(user.channels, set([channel.name_lower]))
         self.assertEqual(channel.users, {"nickname": channel_user})
 
 class ChannelTestKick(unittest.TestCase):
@@ -81,7 +79,7 @@ class ChannelTestKick(unittest.TestCase):
 
         self.assertEqual(len(server.users), 1)
         self.assertEqual(len(server.channels), 1)
-        self.assertEqual(user.channels, set([channel]))
+        self.assertEqual(user.channels, set([channel.name_lower]))
         self.assertEqual(channel.users, {user.nickname_lower: channel_user})
 
 class ChannelTestTopic(unittest.TestCase):
@@ -135,7 +133,7 @@ class ChannelTestNAMES(unittest.TestCase):
         self.assertEqual(channel.users, {
             user.nickname_lower: channel_user_1,
             server.nickname_lower: channel_user_2})
-        self.assertEqual(user.channels, set([channel]))
+        self.assertEqual(user.channels, set([channel.name_lower]))
         self.assertEqual(channel_user_1.modes, ["o", "v"])
 
     def test_userhost_in_names(self):

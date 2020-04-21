@@ -5,9 +5,8 @@ from .named        import Named
 from .channel_user import ChannelUser
 
 class Channel(Named):
-    def __init__(self, name: str):
-        self.name = name
-
+    name_lower: str
+    def __init__(self):
         self.users: Dict[str, ChannelUser] = {}
 
         self.topic:        Optional[str]      = None
@@ -21,6 +20,10 @@ class Channel(Named):
 
     def __repr__(self) -> str:
         return f"Channel(name={self.name!r})"
+
+    def set_name(self, name: str, name_lower: str):
+        self.name       = name
+        self.name_lower = name_lower
 
     def add_mode(self,
             char: str,
