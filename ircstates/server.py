@@ -150,9 +150,14 @@ class Server(Named):
             user = self.users.pop(nickname_lower)
             emit.user = user
 
+            old_nickname_lower = user.nickname_lower
             new_nickname_lower = self.casefold(new_nickname)
             user._set_nickname(new_nickname, new_nickname_lower)
             self.users[new_nickname_lower] = user
+            for channel in user.channels:
+                channel_user = channel.users.pop(old_nickname_lower)
+                channel.users[user.nickname_lower] = channel_user
+
         if nickname_lower == self.nickname_lower:
             emit.self = True
 
