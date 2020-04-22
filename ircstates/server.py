@@ -21,6 +21,7 @@ class ServerDisconnectedException(ServerException):
     pass
 
 WHO_TYPE = "524" # randomly generated
+TYPE_EMIT = Optional[Emit]
 
 class Server(Named):
     def __init__(self, name: str):
@@ -53,23 +54,25 @@ class Server(Named):
     def __repr__(self) -> str:
         return f"Server(name={self.name!r})"
 
-    def recv(self, data: bytes) -> List[Tuple[Line, List[Emit]]]:
+    def recv(self, data: bytes) -> List[Tuple[Line, TYPE_EMIT]]:
         lines = self._decoder.push(data)
         if lines is None:
             raise ServerDisconnectedException()
-        emits: List[List[Emit]] = []
+        emits: List[TYPE_EMIT]
         for line in lines:
-            emits.append(self.parse_tokens(line))
+            emit = self.parse_tokens(line)
+            emits.append(emit)
         return list(zip(lines, emits))
 
-    def parse_tokens(self, line: Line):
-        emits: List[Emit] = []
+    def parse_tokens(self, line: Line) -> TYPE_EMIT:
+        ret_emit: TYPE_EMIT = None
         if line.command in LINE_HANDLERS:
             for callback in LINE_HANDLERS[line.command]:
                 emit = callback(self, line)
-                emit.command = line.command
-                emits.append(emit)
-        return emits
+                if emit is not None and ret_emit is None:
+                    emit.command = line.command
+                    ret_emit = emit
+        return ret_emit
 
     def casefold(self, s1: str):
         return casefold(self.isupport.casemapping, s1)
