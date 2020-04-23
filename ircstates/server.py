@@ -58,7 +58,7 @@ class Server(Named):
         lines = self._decoder.push(data)
         if lines is None:
             raise ServerDisconnectedException()
-        emits: List[TYPE_EMIT]
+        emits: List[TYPE_EMIT] = []
         for line in lines:
             emit = self.parse_tokens(line)
             emits.append(emit)
