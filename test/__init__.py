@@ -7,3 +7,4 @@ from .isupport import *
 from .casemap  import *
 from .emit     import *
 from .who      import *
+from .sasl     import *

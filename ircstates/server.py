@@ -118,6 +118,13 @@ class Server(Named):
     def prepare_whox(self, target: str) -> Line:
         return build("WHO", [target, f"n%ahinrtu,{WHO_TYPE}"])
 
+    def _self_hostmask(self, hostmask: Hostmask):
+        self.nickname = hostmask.nickname
+        if hostmask.username:
+            self.username = hostmask.username
+        if hostmask.hostname:
+            self.hostname = hostmask.hostname
+
     def _emit(self) -> Emit:
         return Emit()
 
@@ -195,10 +202,8 @@ class Server(Named):
                 channel = self._create_channel(line.params[0],
                     channel_lower)
                 self.channels[channel_lower] = channel
-            if line.hostmask.username:
-                self.username = line.hostmask.username
-            if line.hostmask.hostname:
-                self.hostname = line.hostmask.hostname
+
+            self._self_hostmask(line.hostmask)
             if extended:
                 self.account  = account
                 self.realname = realname
@@ -348,13 +353,11 @@ class Server(Named):
 
                 if hostmask.username:
                     user.username = hostmask.username
-                    if nickname_lower == self.nickname_lower:
-                        self.username = hostmask.username
                 if hostmask.hostname:
                     user.hostname = hostmask.hostname
-                    if nickname_lower == self.nickname_lower:
-                        self.hostname = hostmask.hostname
 
+                if nickname_lower == self.nickname_lower:
+                    self._self_hostmask(hostmask)
 
                 for mode in modes:
                     if not mode in channel_user.modes:
@@ -504,10 +507,7 @@ class Server(Named):
         nickname_lower = self.casefold(line.hostmask.nickname)
         if nickname_lower == self.nickname_lower:
             emit.self_source = True
-            if line.hostmask.username:
-                self.username = line.hostmask.username
-            if line.hostmask.hostname:
-                self.hostname = line.hostmask.hostname
+            self._self_hostmask(line.hostmask)
 
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
@@ -733,3 +733,22 @@ class Server(Named):
                         key in self.available_caps):
                     self.agreed_caps.append(key)
         return emit
+
+    @line_handler(RPL_LOGGEDIN)
+    def _handle_loggedin(self, line: Line) -> Emit:
+        hostmask_str = line.params[1]
+        hostmask     = Hostmask.from_source(hostmask_str)
+        account      = line.params[2]
+
+        self.account = account
+        self._self_hostmask(hostmask)
+        return self._emit()
+
+    @line_handler(RPL_LOGGEDOUT)
+    def _handle_loggedout(self, line: Line) -> Emit:
+        hostmask_str = line.params[1]
+        hostmask     = Hostmask.from_source(hostmask_str)
+
+        self.account = None
+        self._self_hostmask(hostmask)
+        return self._emit()
