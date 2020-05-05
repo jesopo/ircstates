@@ -372,7 +372,7 @@ class Server(Named):
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
             emit.channel = channel
-            channel.created = datetime.fromtimestamp(int(line.params[2]))
+            channel.created = datetime.utcfromtimestamp(int(line.params[2]))
         return emit
 
     @line_handler("TOPIC")
