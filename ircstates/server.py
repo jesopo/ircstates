@@ -406,7 +406,7 @@ class Server(Named):
             channel = self.channels[channel_lower]
             emit.channel = channel
             channel.topic_setter = line.params[2]
-            channel.topic_time   = datetime.fromtimestamp(int(line.params[3]))
+            channel.topic_time   = datetime.utcfromtimestamp(int(line.params[3]))
         return emit
 
     def _channel_modes(self,
