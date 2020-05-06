@@ -1,6 +1,6 @@
 from typing    import Callable, Dict, List, Optional, Set, Tuple
-from datetime  import datetime
 from irctokens import build, Hostmask, Line, StatefulDecoder, StatefulEncoder
+from pendulum  import from_timestamp, now
 
 from .named        import Named
 from .user         import User
@@ -372,7 +372,7 @@ class Server(Named):
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
             emit.channel = channel
-            channel.created = datetime.utcfromtimestamp(int(line.params[2]))
+            channel.created = from_timestamp(int(line.params[2]))
         return emit
 
     @line_handler("TOPIC")
@@ -384,7 +384,7 @@ class Server(Named):
             emit.channel = channel
             channel.topic        = line.params[1]
             channel.topic_setter = str(line.hostmask)
-            channel.topic_time   = datetime.utcnow()
+            channel.topic_time   = now("utc")
         return emit
 
     @line_handler(RPL_TOPIC)
@@ -406,7 +406,7 @@ class Server(Named):
             channel = self.channels[channel_lower]
             emit.channel = channel
             channel.topic_setter = line.params[2]
-            channel.topic_time   = datetime.utcfromtimestamp(int(line.params[3]))
+            channel.topic_time   = from_timestamp(int(line.params[3]))
         return emit
 
     def _channel_modes(self,

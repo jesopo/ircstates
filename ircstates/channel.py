@@ -1,5 +1,5 @@
-from datetime import datetime
-from typing import Dict, List, Optional, Set
+from typing   import Dict, List, Optional, Set
+from pendulum import DateTime
 
 from .named        import Named
 from .channel_user import ChannelUser
@@ -11,9 +11,9 @@ class Channel(Named):
 
         self.topic:        Optional[str]      = None
         self.topic_setter: Optional[str]      = None
-        self.topic_time:   Optional[datetime] = None
+        self.topic_time:   Optional[DateTime] = None
 
-        self.created:      Optional[datetime] = None
+        self.created:      Optional[DateTime] = None
 
         self.list_modes:   Dict[str, List[str]]     = {}
         self.modes:        Dict[str, Optional[str]] = {}

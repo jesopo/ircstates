@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime
+import pendulum
 import ircstates, irctokens
 
 class ChannelTestJoin(unittest.TestCase):
@@ -91,7 +91,7 @@ class ChannelTestTopic(unittest.TestCase):
         self.assertEqual(server.channels["#chan"].topic, "test")
 
     def test_set_by_at(self):
-        dt = datetime.utcfromtimestamp(1584023277)
+        dt = pendulum.datetime(2020, 3, 12, 14, 27, 57)
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
@@ -109,7 +109,7 @@ class ChannelTestTopic(unittest.TestCase):
 
 class ChannelTestCreation(unittest.TestCase):
     def test(self):
-        dt = datetime.utcfromtimestamp(1584041889)
+        dt = pendulum.datetime(2020, 3, 12, 19, 38, 9)
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
