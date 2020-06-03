@@ -20,3 +20,18 @@ class User(Named):
             nickname_lower: str):
         self.nickname       = nickname
         self.nickname_lower = nickname_lower
+
+    def hostmask(self) -> Optional[str]:
+        hostmask = self.nickname
+        if self.username is not None:
+            hostmask += f"!{self.username}"
+        if self.hostname is not None:
+            hostmask += f"@{self.hostname}"
+        return hostmask
+
+    def userhost(self) -> Optional[str]:
+        if (self.username is not None and
+                self.hostname is not None):
+            return f"{self.username}@{self.hostname}"
+        else:
+            return None

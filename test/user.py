@@ -22,10 +22,13 @@ class UserTestHostmaskJoin(unittest.TestCase):
             irctokens.tokenise(":nickname!user@host JOIN #chan"))
         self.assertEqual(server.username, "user")
         self.assertEqual(server.hostname, "host")
+
         server.parse_tokens(irctokens.tokenise(":other!user@host JOIN #chan"))
         user = server.users["other"]
         self.assertEqual(user.username, "user")
         self.assertEqual(user.hostname, "host")
+        self.assertEqual(user.userhost(), "user@host")
+        self.assertEqual(user.hostmask(), "other!user@host")
 
     def test_user(self):
         server = ircstates.Server("test")
@@ -33,10 +36,13 @@ class UserTestHostmaskJoin(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise(":nickname!user JOIN #chan"))
         self.assertEqual(server.username, "user")
         self.assertIsNone(server.hostname)
+
         server.parse_tokens(irctokens.tokenise(":other!user JOIN #chan"))
         user = server.users["other"]
         self.assertEqual(user.username, "user")
         self.assertIsNone(user.hostname)
+        self.assertIsNone(user.userhost())
+        self.assertEqual(user.hostmask(), "other!user")
 
     def test_host(self):
         server = ircstates.Server("test")
@@ -44,10 +50,13 @@ class UserTestHostmaskJoin(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise(":nickname@host JOIN #chan"))
         self.assertIsNone(server.username)
         self.assertEqual(server.hostname, "host")
+
         server.parse_tokens(irctokens.tokenise(":other@host JOIN #chan"))
         user = server.users["other"]
         self.assertIsNone(user.username)
         self.assertEqual(user.hostname, "host")
+        self.assertIsNone(user.userhost())
+        self.assertEqual(user.hostmask(), "other@host")
 
 class UserTestExtendedJoin(unittest.TestCase):
     def test_without_extended_join(self):
