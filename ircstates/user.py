@@ -21,7 +21,7 @@ class User(Named):
         self.nickname       = nickname
         self.nickname_lower = nickname_lower
 
-    def hostmask(self) -> Optional[str]:
+    def hostmask(self) -> str:
         hostmask = self.nickname
         if self.username is not None:
             hostmask += f"!{self.username}"
