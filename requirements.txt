@@ -1,2 +1,2 @@
-irctokens ==1.0.0
+irctokens ==1.0.2
 pendulum  ==2.1.0
