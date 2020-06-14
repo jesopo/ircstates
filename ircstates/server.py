@@ -473,8 +473,10 @@ class Server(Named):
             emit.self_target = True
             emit.tokens = modes
 
-            for mod, char in modes:
-                if mod == "+":
+            for mode in modes:
+                add  = mode[0] == "+"
+                char = mode[1]
+                if add:
                     if not char in self.modes:
                         self.modes.append(char)
                 elif char in self.modes:
