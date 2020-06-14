@@ -411,12 +411,21 @@ class Server(Named):
 
     def _channel_modes(self,
             channel: Channel,
-            modes: List[Tuple[bool, str]],
-            params: List[str]):
-        for add, char in modes:
+            modes: List[str],
+            params: List[str]
+            ) -> List[Tuple[str, Optional[str]]]:
+        tokens: List[Tuple[str, Optional[str]]] = []
+
+        for mode in modes:
+            add  = mode[0] == "+"
+            char = mode[1]
+            arg: Optional[str] = None
+
             list_mode = char in self.isupport.chanmodes.list_modes
             if char in self.isupport.prefix.modes:
-                nickname_lower = self.casefold(params.pop(0))
+                arg = params.pop(0)
+                nickname_lower = self.casefold(arg)
+
                 if nickname_lower in self.users:
                     user = self.users[nickname_lower]
                     channel_user = channel.users[user.nickname_lower]
@@ -429,15 +438,19 @@ class Server(Named):
                     list_mode or
                     char in self.isupport.chanmodes.setting_b_modes or
                     char in self.isupport.chanmodes.setting_c_modes):
-                channel.add_mode(char, params.pop(0), list_mode)
+                arg = params.pop(0)
+                channel.add_mode(char, arg, list_mode)
             elif not add and (
                     list_mode or
                     char in self.isupport.chanmodes.setting_b_modes):
-                channel.remove_mode(char, params.pop(0))
+                arg = params.pop(0)
+                channel.remove_mode(char, arg)
             elif add:
                 channel.add_mode(char, None, False)
             else:
                 channel.remove_mode(char, None)
+            tokens.append((mode, arg))
+        return tokens
 
     @line_handler("MODE")
     def _handle_MODE(self, line: Line) -> Emit:
@@ -446,24 +459,22 @@ class Server(Named):
         modes_str  = line.params[1]
         params     = line.params[2:].copy()
 
-        modifier                      = "+"
-        modes: List[Tuple[bool, str]] = []
-        tokens: List[str]             = []
+        modifier          = "+"
+        modes: List[str]  = []
 
         for c in list(modes_str):
             if c in ["+", "-"]:
                 modifier = c
             else:
-                add = modifier == "+"
-                modes.append((add, c))
-                tokens.append(f"{modifier}{c}")
-        emit.tokens = tokens
+                modes.append(f"{modifier}{c}")
 
         target_lower = self.casefold(target)
         if target_lower == self.nickname_lower:
             emit.self_target = True
-            for add, char in modes:
-                if add:
+            emit.tokens = modes
+
+            for mod, char in modes:
+                if mod == "+":
                     if not char in self.modes:
                         self.modes.append(char)
                 elif char in self.modes:
@@ -471,7 +482,15 @@ class Server(Named):
         elif target_lower in self.channels:
             channel = self.channels[self.casefold(target)]
             emit.channel = channel
-            self._channel_modes(channel, modes, params)
+            ctokens = self._channel_modes(channel, modes, params)
+
+            ctokens_str: List[str] = []
+            for mode, arg in ctokens:
+                if arg is not None:
+                    ctokens_str.append(f"{mode} {arg}")
+                else:
+                    ctokens_str.append(mode)
+            emit.tokens = ctokens_str
         return emit
 
     @line_handler(RPL_CHANNELMODEIS)
@@ -482,7 +501,7 @@ class Server(Named):
         if channel_lower in self.channels:
             channel = self.channels[channel_lower]
             emit.channel = channel
-            modes   = [(True, char) for char in line.params[2].lstrip("+")]
+            modes   = [f"+{char}" for char in line.params[2].lstrip("+")]
             params  = line.params[3:]
             self._channel_modes(channel, modes, params)
         return emit

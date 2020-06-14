@@ -79,7 +79,7 @@ class EmitTest(unittest.TestCase):
         self.assertEqual(emit.user_target, user_other)
         self.assertEqual(emit.channel,     channel)
 
-    def test_mode(self):
+    def test_mode_self(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         emit = server.parse_tokens(
@@ -90,3 +90,17 @@ class EmitTest(unittest.TestCase):
         self.assertTrue(emit.self_target)
         self.assertEqual(emit.tokens,
             ["+x", "+i", "-i", "+w", "+i", "-w", "-i"])
+
+    def test_mode_channel(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        channel = server.channels["#chan"]
+        emit = server.parse_tokens(
+            irctokens.tokenise(":server MODE #chan +im-m+b-k asd!*@* key"))
+
+        self.assertIsNotNone(emit)
+        self.assertEqual(emit.command, "MODE")
+        self.assertEqual(emit.channel, channel)
+        self.assertEqual(emit.tokens,
+            ["+i", "+m", "-m", "+b asd!*@*", "-k key"])
