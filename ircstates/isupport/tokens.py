@@ -1,12 +1,15 @@
 from typing import List, Optional
-from dataclasses import dataclass
 
-@dataclass
 class ChanModes(object):
-    a_modes: List[str]
-    b_modes: List[str]
-    c_modes: List[str]
-    d_modes: List[str]
+    def __init__(self,
+            a_modes: List[str],
+            b_modes: List[str],
+            c_modes: List[str],
+            d_modes: List[str]):
+        self.a_modes = a_modes
+        self.b_modes = b_modes
+        self.c_modes = c_modes
+        self.d_modes = d_modes
 
 class Prefix(object):
     def __init__(self,
