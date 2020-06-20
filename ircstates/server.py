@@ -421,8 +421,7 @@ class Server(Named):
             char = mode[1]
             arg: Optional[str] = None
 
-            list_mode = char in self.isupport.chanmodes.list_modes
-            if char in self.isupport.prefix.modes:
+            if char in self.isupport.prefix.modes: # a user's status
                 arg = params.pop(0)
                 nickname_lower = self.casefold(arg)
 
@@ -434,22 +433,26 @@ class Server(Named):
                             channel_user.modes.append(char)
                     elif char in channel_user.modes:
                         channel_user.modes.remove(char)
-            elif add and (
-                    list_mode or
-                    char in self.isupport.chanmodes.setting_b_modes or
-                    char in self.isupport.chanmodes.setting_c_modes):
-                arg = params.pop(0)
-                channel.add_mode(char, arg, list_mode)
-            elif not add and (
-                    list_mode or
-                    char in self.isupport.chanmodes.setting_b_modes):
-                arg = params.pop(0)
-                channel.remove_mode(char, arg)
             elif add:
-                channel.add_mode(char, None, False)
-            else:
-                channel.remove_mode(char, None)
+                if char in self.isupport.chanmodes.list_modes:
+                    arg = params.pop(0)
+                    channel.add_mode(char, arg, True)
+                elif (char in self.isupport.chanmodes.setting_b_modes or
+                        char in self.isupport.chanmodes.setting_c_modes):
+                    arg = params.pop(0)
+                    channel.add_mode(char, arg, False)
+                else:
+                    channel.add_mode(char, None, False)
+            else: # remove
+                if (char in self.isupport.chanmodes.list_modes or
+                        char in self.isupport.chanmodes.setting_b_modes):
+                    arg = params.pop(0)
+                    channel.remove_mode(char, arg)
+                else:
+                    channel.remove_mode(char, None)
+
             tokens.append((mode, arg))
+
         return tokens
 
     @line_handler("MODE")
