@@ -434,18 +434,18 @@ class Server(Named):
                     elif char in channel_user.modes:
                         channel_user.modes.remove(char)
             elif add:
-                if char in self.isupport.chanmodes.list_modes:
+                if char in self.isupport.chanmodes.a_modes:
                     arg = params.pop(0)
                     channel.add_mode(char, arg, True)
-                elif (char in self.isupport.chanmodes.setting_b_modes or
-                        char in self.isupport.chanmodes.setting_c_modes):
+                elif (char in self.isupport.chanmodes.b_modes or
+                        char in self.isupport.chanmodes.c_modes):
                     arg = params.pop(0)
                     channel.add_mode(char, arg, False)
                 else:
                     channel.add_mode(char, None, False)
             else: # remove
-                if (char in self.isupport.chanmodes.list_modes or
-                        char in self.isupport.chanmodes.setting_b_modes):
+                if (char in self.isupport.chanmodes.a_modes or
+                        char in self.isupport.chanmodes.b_modes):
                     arg = params.pop(0)
                     channel.remove_mode(char, arg)
                 else:

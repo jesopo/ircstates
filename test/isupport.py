@@ -5,16 +5,16 @@ class ISUPPORTTest(unittest.TestCase):
     def test_chanmodes(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
-        self.assertEqual(server.isupport.chanmodes.list_modes,      ["b"])
-        self.assertEqual(server.isupport.chanmodes.setting_b_modes, ["k"])
-        self.assertEqual(server.isupport.chanmodes.setting_c_modes, ["l"])
-        self.assertEqual(server.isupport.chanmodes.setting_d_modes,
+        self.assertEqual(server.isupport.chanmodes.a_modes, ["b"])
+        self.assertEqual(server.isupport.chanmodes.b_modes, ["k"])
+        self.assertEqual(server.isupport.chanmodes.c_modes, ["l"])
+        self.assertEqual(server.isupport.chanmodes.d_modes,
             ["i", "m", "n", "p", "s", "t"])
         server.parse_tokens(irctokens.tokenise("005 * CHANMODES=a,b,c,d *"))
-        self.assertEqual(server.isupport.chanmodes.list_modes,      ["a"])
-        self.assertEqual(server.isupport.chanmodes.setting_b_modes, ["b"])
-        self.assertEqual(server.isupport.chanmodes.setting_c_modes, ["c"])
-        self.assertEqual(server.isupport.chanmodes.setting_d_modes, ["d"])
+        self.assertEqual(server.isupport.chanmodes.a_modes, ["a"])
+        self.assertEqual(server.isupport.chanmodes.b_modes, ["b"])
+        self.assertEqual(server.isupport.chanmodes.c_modes, ["c"])
+        self.assertEqual(server.isupport.chanmodes.d_modes, ["d"])
 
     def test_prefix(self):
         server = ircstates.Server("test")
