@@ -27,7 +27,7 @@ class ISupport(object):
     def __init__(self):
         self.raw = {}
 
-    def tokens(self, tokens: List[str]):
+    def from_tokens(self, tokens: List[str]):
         for token in tokens:
             key, sep, value = token.partition("=")
             self.raw[key] = value if sep else None

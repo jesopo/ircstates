@@ -139,7 +139,7 @@ class Server(Named):
     @line_handler(RPL_ISUPPORT)
     # https://defs.ircdocs.horse/defs/isupport.html
     def _handle_ISUPPORT(self, line: Line) -> Emit:
-        self.isupport.tokens(line.params[1:-1])
+        self.isupport.from_tokens(line.params[1:-1])
         return self._emit()
 
     @line_handler(RPL_MOTDSTART)
