@@ -160,29 +160,28 @@ class Server(Named):
 
     @line_handler("NICK")
     def _handle_NICK(self, line: Line) -> Emit:
-        new_nickname = line.params[0]
-        nickname_lower = self.casefold(line.hostmask.nickname)
+        new_nickname       = line.params[0]
+        new_nickname_lower = self.casefold(new_nickname)
+        nickname_lower     = self.casefold(line.hostmask.nickname)
 
         emit = self._emit()
 
         if nickname_lower in self.users:
             user = self.users.pop(nickname_lower)
             emit.user = user
-
-            old_nickname_lower = user.nickname_lower
-            new_nickname_lower = self.casefold(new_nickname)
             user.set_nickname(new_nickname, new_nickname_lower)
             self.users[new_nickname_lower] = user
+
             for channel_lower in user.channels:
                 channel = self.channels[channel_lower]
-                channel_user = channel.users.pop(old_nickname_lower)
+                channel_user = channel.users.pop(nickname_lower)
                 channel.users[user.nickname_lower] = channel_user
 
         if nickname_lower == self.nickname_lower:
             emit.self = True
 
-            self.nickname = new_nickname
-            self.nickname_lower = self.casefold(new_nickname)
+            self.nickname       = new_nickname
+            self.nickname_lower = new_nickname_lower
         return emit
 
     @line_handler("JOIN")
