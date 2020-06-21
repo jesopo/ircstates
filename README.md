@@ -60,8 +60,8 @@ while True:
 >>> user = server.users["nickname"]
 >>> user
 User(nickname='nickname')
->>> server.user_channels[user]
-{Channel(name='#chan')}
+>>> user.channels
+{'#chan'}
 ```
 
 ### get a channel's users
@@ -71,17 +71,16 @@ User(nickname='nickname')
 >>> channel = server.channels["#chan"]
 >>> channel
 Channel(name='#chan')
->>> server.channel_users[channel]
-{User(nickname='nickname'): ChannelUser(user='nickname', channel='#chan', modes='ov')}
+>>> channel.users
+{'jess': ChannelUser(#chan jess)}
 ```
 
 ### get a user's modes in channel
 ```python
->>> user = server.users["nickname"]
 >>> channel = server.channels["#chan"]
->>> channel_user = server.channel_users[channel][user]
+>>> channel_user = channel.users["nickname"]
 >>> channel_user
-ChannelUser(user='nickname', channel='#chan', modes='ov')
+ChannelUser(#chan jess +ov)
 >>> channel_user.modes
 {'o', 'v'}
 ```
