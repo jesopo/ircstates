@@ -1,11 +1,12 @@
 from typing import Optional, Set
-from .named import Named
 
-class User(Named):
-    nickname:       str
-    nickname_lower: str
+class User(object):
+    def __init__(self,
+            nickname: str,
+            nickname_lower: str):
+        self.nickname       = nickname
+        self.nickname_lower = nickname_lower
 
-    def __init__(self):
         self.username: Optional[str] = None
         self.hostname: Optional[str] = None
         self.realname: Optional[str] = None
@@ -16,7 +17,8 @@ class User(Named):
     def __repr__(self) -> str:
         return f"User(nickname={self.nickname!r})"
 
-    def set_nickname(self, nickname: str,
+    def set_nickname(self,
+            nickname: str,
             nickname_lower: str):
         self.nickname       = nickname
         self.nickname_lower = nickname_lower

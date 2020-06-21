@@ -2,7 +2,6 @@ from typing    import Callable, Dict, List, Optional, Set, Tuple
 from irctokens import build, Hostmask, Line, StatefulDecoder, StatefulEncoder
 from pendulum  import from_timestamp, now
 
-from .named        import Named
 from .user         import User
 from .channel      import Channel
 from .channel_user import ChannelUser
@@ -23,7 +22,7 @@ class ServerDisconnectedException(ServerException):
 WHO_TYPE = "524" # randomly generated
 TYPE_EMIT = Optional[Emit]
 
-class Server(Named):
+class Server(object):
     def __init__(self, name: str):
         self.name = name
 
@@ -84,7 +83,7 @@ class Server(Named):
     def has_user(self, nickname: str) -> bool:
         return self.casefold(nickname) in self.users
     def _add_user(self, nickname: str, nickname_lower: str):
-        user = self._create_user(nickname, nickname_lower)
+        user = self.create_user(nickname, nickname_lower)
         self.users[nickname_lower] = user
 
     def is_channel(self, target: str) -> bool:
@@ -94,19 +93,17 @@ class Server(Named):
     def get_channel(self, name: str) -> Optional[Channel]:
         return self.channels.get(self.casefold(name), None)
 
-    def create_user(self) -> User:
-        return User()
-    def _create_user(self, nickname: str, nickname_lower: str) -> User:
-        user = self.create_user()
-        user.set_nickname(nickname, nickname_lower)
-        return user
+    def create_user(self,
+            nickname: str,
+            nickname_lower: str
+            ) -> User:
+        return User(nickname, nickname_lower)
 
-    def create_channel(self) -> Channel:
-        return Channel()
-    def _create_channel(self, name: str, name_lower: str) -> Channel:
-        channel = self.create_channel()
-        channel.set_name(name, name_lower)
-        return channel
+    def create_channel(self,
+            name: str,
+            name_lower: str
+            ) -> Channel:
+        return Channel(name, name_lower)
 
     def _user_join(self, channel: Channel, user: User) -> ChannelUser:
         channel_user = ChannelUser()
@@ -198,7 +195,8 @@ class Server(Named):
         if nickname_lower == self.nickname_lower:
             emit.self = True
             if not channel_lower in self.channels:
-                channel = self._create_channel(line.params[0],
+                channel = self.create_channel(
+                    line.params[0],
                     channel_lower)
                 self.channels[channel_lower] = channel
 
@@ -287,7 +285,8 @@ class Server(Named):
             if kicker_lower in self.users:
                 emit.user_source = self.users[kicker_lower]
             else:
-                emit.user_source = self._create_user(line.hostmask.nickname,
+                emit.user_source = self.create_user(
+                    line.hostmask.nickname,
                     kicker_lower)
 
         return emit
@@ -535,7 +534,7 @@ class Server(Named):
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
         else:
-            user = self._create_user(line.hostmask.nickname, nickname_lower)
+            user = self.create_user(line.hostmask.nickname, nickname_lower)
         emit.user = user
 
         if line.hostmask.username:
