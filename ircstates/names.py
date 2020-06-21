@@ -1,6 +1,7 @@
-from dataclasses import dataclass
 
-@dataclass
 class Name(object):
-    normal: str
-    folded: str
+    def __init__(self,
+            normal: str,
+            folded: str):
+        self.normal = normal
+        self.folded = folded
