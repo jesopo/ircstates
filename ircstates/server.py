@@ -8,6 +8,7 @@ from .channel_user import ChannelUser
 from .isupport     import ISupport
 from .decorators   import handler_decorator
 from .casemap      import casefold
+from .names        import Name
 from .emit         import *
 from .numerics     import *
 
@@ -83,7 +84,7 @@ class Server(object):
     def has_user(self, nickname: str) -> bool:
         return self.casefold(nickname) in self.users
     def _add_user(self, nickname: str, nickname_lower: str):
-        user = self.create_user(nickname, nickname_lower)
+        user = self.create_user(Name(nickname, nickname_lower))
         self.users[nickname_lower] = user
 
     def is_channel(self, target: str) -> bool:
@@ -93,20 +94,16 @@ class Server(object):
     def get_channel(self, name: str) -> Optional[Channel]:
         return self.channels.get(self.casefold(name), None)
 
-    def create_user(self,
-            nickname: str,
-            nickname_lower: str
-            ) -> User:
-        return User(nickname, nickname_lower)
+    def create_user(self, nickname: Name) -> User:
+        return User(nickname)
 
-    def create_channel(self,
-            name: str,
-            name_lower: str
-            ) -> Channel:
-        return Channel(name, name_lower)
+    def create_channel(self, name: Name) -> Channel:
+        return Channel(name)
 
     def _user_join(self, channel: Channel, user: User) -> ChannelUser:
-        channel_user = ChannelUser()
+        channel_user = ChannelUser(
+            user.get_name(),
+            channel.get_name())
 
         user.channels.add(self.casefold(channel.name))
         channel.users[user.nickname_lower] = channel_user
@@ -166,7 +163,7 @@ class Server(object):
         if nickname_lower in self.users:
             user = self.users.pop(nickname_lower)
             emit.user = user
-            user.set_nickname(new_nickname, new_nickname_lower)
+            user.change_nickname(new_nickname, new_nickname_lower)
             self.users[new_nickname_lower] = user
 
             for channel_lower in user.channels:
@@ -196,8 +193,8 @@ class Server(object):
             emit.self = True
             if not channel_lower in self.channels:
                 channel = self.create_channel(
-                    line.params[0],
-                    channel_lower)
+                    Name(line.params[0], channel_lower)
+                )
                 self.channels[channel_lower] = channel
 
             self._self_hostmask(line.hostmask)
@@ -286,8 +283,8 @@ class Server(object):
                 emit.user_source = self.users[kicker_lower]
             else:
                 emit.user_source = self.create_user(
-                    line.hostmask.nickname,
-                    kicker_lower)
+                    Name(line.hostmask.nickname, kicker_lower)
+                )
 
         return emit
 
@@ -534,7 +531,9 @@ class Server(object):
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
         else:
-            user = self.create_user(line.hostmask.nickname, nickname_lower)
+            user = self.create_user(
+                Name(line.hostmask.nickname, nickname_lower)
+            )
         emit.user = user
 
         if line.hostmask.username:

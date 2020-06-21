@@ -5,14 +5,21 @@ class UserTestNicknameChange(unittest.TestCase):
     def test(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
-        server.parse_tokens(irctokens.tokenise(":nickname NICK nickname2"))
-        self.assertEqual(server.nickname, "nickname2")
+        server.parse_tokens(irctokens.tokenise(":nickname NICK Nickname2"))
+        self.assertEqual(server.nickname,       "Nickname2")
+        self.assertEqual(server.nickname_lower, "nickname2")
+
         server.parse_tokens(irctokens.tokenise(":nickname2 JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
         self.assertIn("other", server.users)
-        server.parse_tokens(irctokens.tokenise(":other NICK other2"))
+        user = server.users["other"]
+
+        server.parse_tokens(irctokens.tokenise(":other NICK Other2"))
         self.assertNotIn("other", server.users)
         self.assertIn("other2", server.users)
+
+        self.assertEqual(user.nickname,       "Other2")
+        self.assertEqual(user.nickname_lower, "other2")
 
 class UserTestHostmaskJoin(unittest.TestCase):
     def test_both(self):

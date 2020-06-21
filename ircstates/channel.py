@@ -2,12 +2,11 @@ from typing   import Dict, List, Optional, Set
 from pendulum import DateTime
 
 from .channel_user import ChannelUser
+from .names        import Name
 
 class Channel(object):
-    name_lower: str
-    def __init__(self, name: str, name_lower: str):
-        self.name       = name
-        self.name_lower = name_lower
+    def __init__(self, name: Name):
+        self._name = name
 
         self.users: Dict[str, ChannelUser] = {}
 
@@ -22,6 +21,15 @@ class Channel(object):
 
     def __repr__(self) -> str:
         return f"Channel(name={self.name!r})"
+
+    def get_name(self) -> Name:
+        return self._name
+    @property
+    def name(self) -> str:
+        return self._name.normal
+    @property
+    def name_lower(self) -> str:
+        return self._name.folded
 
     def add_mode(self,
             char: str,

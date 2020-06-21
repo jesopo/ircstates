@@ -1,11 +1,9 @@
 from typing import Optional, Set
+from .names import Name
 
 class User(object):
-    def __init__(self,
-            nickname: str,
-            nickname_lower: str):
-        self.nickname       = nickname
-        self.nickname_lower = nickname_lower
+    def __init__(self, nickname: Name):
+        self._nickname = nickname
 
         self.username: Optional[str] = None
         self.hostname: Optional[str] = None
@@ -17,11 +15,20 @@ class User(object):
     def __repr__(self) -> str:
         return f"User(nickname={self.nickname!r})"
 
-    def set_nickname(self,
-            nickname: str,
-            nickname_lower: str):
-        self.nickname       = nickname
-        self.nickname_lower = nickname_lower
+    def get_name(self) -> Name:
+        return self._nickname
+    @property
+    def nickname(self) -> str:
+        return self._nickname.normal
+    @property
+    def nickname_lower(self) -> str:
+        return self._nickname.folded
+
+    def change_nickname(self,
+            normal: str,
+            folded: str):
+        self._nickname.normal = normal
+        self._nickname.folded = folded
 
     def hostmask(self) -> str:
         hostmask = self.nickname
