@@ -1,5 +1,6 @@
 from typing    import Callable, Dict, List, Optional, Set, Tuple
-from irctokens import build, Hostmask, Line, StatefulDecoder, StatefulEncoder
+from irctokens import Line, build, Hostmask, StatefulDecoder, StatefulEncoder
+from irctokens import hostmask as hostmask_
 from pendulum  import from_timestamp, now
 
 from .user         import User
@@ -338,7 +339,7 @@ class Server(object):
                     else:
                         break
 
-                hostmask = Hostmask.from_source(nickname[len(modes):])
+                hostmask = hostmask_(nickname[len(modes):])
                 nickname_lower = self.casefold(hostmask.nickname)
                 if not nickname_lower in self.users:
                     self._add_user(hostmask.nickname, nickname_lower)
@@ -758,7 +759,7 @@ class Server(object):
     @line_handler(RPL_LOGGEDIN)
     def _handle_loggedin(self, line: Line) -> Emit:
         hostmask_str = line.params[1]
-        hostmask     = Hostmask.from_source(hostmask_str)
+        hostmask     = hostmask_(hostmask_str)
         account      = line.params[2]
 
         self.account = account
@@ -768,7 +769,7 @@ class Server(object):
     @line_handler(RPL_LOGGEDOUT)
     def _handle_loggedout(self, line: Line) -> Emit:
         hostmask_str = line.params[1]
-        hostmask     = Hostmask.from_source(hostmask_str)
+        hostmask     = hostmask_(hostmask_str)
 
         self.account = None
         self._self_hostmask(hostmask)
