@@ -379,7 +379,7 @@ class Server(object):
             channel = self.channels[channel_lower]
             emit.channel = channel
             channel.topic        = line.params[1]
-            channel.topic_setter = str(line.hostmask)
+            channel.topic_setter = line.source
             channel.topic_time   = now("utc")
         return emit
 
