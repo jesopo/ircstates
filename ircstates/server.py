@@ -21,7 +21,7 @@ class ServerException(Exception):
 class ServerDisconnectedException(ServerException):
     pass
 
-WHO_TYPE = "524" # randomly generated
+WHO_TYPE = "937" # randomly generated
 TYPE_EMIT = Optional[Emit]
 
 class Server(object):
@@ -111,7 +111,7 @@ class Server(object):
         return channel_user
 
     def prepare_whox(self, target: str) -> Line:
-        return build("WHO", [target, f"n%ahinrtu,{WHO_TYPE}"])
+        return build("WHO", [target, f"n%afhinrtu,{WHO_TYPE}"])
 
     def _self_hostmask(self, hostmask: Hostmask):
         self.nickname = hostmask.nickname
@@ -578,6 +578,8 @@ class Server(object):
         nickname = line.params[5]
         username = line.params[2]
         hostname = line.params[3]
+        status   = line.params[6]
+        away     = "" if "G" in status else None
         realname = line.params[7].split(" ", 1)[1]
 
         nickname_lower = self.casefold(line.params[5])
@@ -586,6 +588,7 @@ class Server(object):
             self.username = username
             self.hostname = hostname
             self.realname = realname
+            self.away     = away
 
         if nickname_lower in self.users:
             user = self.users[nickname_lower]
@@ -593,21 +596,24 @@ class Server(object):
             user.username = username
             user.hostname = hostname
             user.realname = realname
+            user.away     = away
         return emit
 
     @line_handler(RPL_WHOSPCRPL)
     # WHOX line, "WHO #channel|nickname" response; only listen for our "type"
     def _handle_whox(self, line: Line) -> Emit:
         emit = self._emit()
-        if line.params[1] == WHO_TYPE and len(line.params) == 8:
+        if line.params[1] == WHO_TYPE and len(line.params) == 9:
             nickname_lower = self.casefold(line.params[5])
             username = line.params[2]
             hostname = line.params[4]
-            realname = line.params[7]
+            status   = line.params[6]
+            away     = "" if "G" in status else None
+            realname = line.params[8]
 
             account: Optional[str] = None
-            if not line.params[6] == "0":
-                account = line.params[6]
+            if not line.params[7] == "0":
+                account = line.params[7]
 
             if nickname_lower in self.users:
                 user = self.users[nickname_lower]
@@ -616,12 +622,15 @@ class Server(object):
                 user.hostname = hostname
                 user.realname = realname
                 user.account  = account
+                user.away     = away
+
             if nickname_lower == self.nickname_lower:
                 emit.self = True
                 self.username = username
                 self.hostname = hostname
                 self.realname = realname
                 self.account  = account
+                self.away     = away
 
         return emit
 
