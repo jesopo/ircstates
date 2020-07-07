@@ -691,6 +691,21 @@ class Server(object):
             user.realname = realname
         return emit
 
+    @line_handler(RPL_AWAY)
+    # sent in response to a command directed at a user who is marked as away
+    def _handle_RPL_AWAY(self, line: Line) -> Emit:
+        nickname       = line.params[1]
+        nickname_lower = self.casefold(nickname)
+        reason         = line.params[2]
+
+        if nickname_lower == self.nickname_lower:
+            self.away = reason
+        if nickname_lower in self.users:
+            user = self.users[nickname_lower]
+            user.away = reason
+
+        return self._emit()
+
     @line_handler("AWAY")
     def _handle_AWAY(self, line: Line) -> Emit:
         emit = self._emit()

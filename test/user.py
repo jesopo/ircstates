@@ -236,32 +236,45 @@ class UserTestWHOIS(unittest.TestCase):
         self.assertEqual(user.hostname, "h2")
         self.assertEqual(user.realname, "r2")
 
-class UserTestAWAY(unittest.TestCase):
-    def test_set(self):
+class UserTestAway(unittest.TestCase):
+    def test_verb_set(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
-        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
-        user = server.users["other"]
-        self.assertIsNone(server.away)
-        self.assertIsNone(user.away)
-        server.parse_tokens(irctokens.tokenise(":nickname AWAY :bye bye"))
-        server.parse_tokens(irctokens.tokenise(":other AWAY :ik ga weg"))
-        self.assertEqual(server.away, "bye bye")
-        self.assertEqual(user.away, "ik ga weg")
 
-    def test_unset(self):
+        user = server.users["nickname"]
+        self.assertIsNone(server.away)
+        self.assertIsNone(user.away)
+
+        server.parse_tokens(irctokens.tokenise(":nickname AWAY :ik ga weg"))
+        self.assertEqual(server.away, "ik ga weg")
+        self.assertEqual(user.away,   "ik ga weg")
+
+    def test_verb_unset(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
-        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
-        server.parse_tokens(irctokens.tokenise(":nickname AWAY :ik ga weg"))
+        user = server.users["nickname"]
+
+        server.parse_tokens(irctokens.tokenise(
+            ":nickname AWAY :let's blow this popsicle stand"))
         server.parse_tokens(irctokens.tokenise(":nickname AWAY"))
-        server.parse_tokens(irctokens.tokenise(":other AWAY :ik ga weg"))
-        server.parse_tokens(irctokens.tokenise(":other AWAY"))
-        user = server.users["other"]
         self.assertIsNone(server.away)
         self.assertIsNone(user.away)
+
+    def test_numeric(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        user = server.users["nickname"]
+
+        self.assertIsNone(server.away)
+        self.assertIsNone(user.away)
+
+        server.parse_tokens(irctokens.tokenise(
+            "301 * nickname :i saw something shiny"))
+        self.assertEqual(server.away, "i saw something shiny")
+        self.assertEqual(user.away,   "i saw something shiny")
 
 class UserTestSETNAME(unittest.TestCase):
     def test(self):
