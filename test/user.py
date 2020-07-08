@@ -229,7 +229,6 @@ class UserTestWHOIS(unittest.TestCase):
         self.assertEqual(server.realname, "r")
 
         server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
-        server.parse_tokens(irctokens.tokenise(":other CHGHOST u2 h2"))
         server.parse_tokens(irctokens.tokenise("311 * other u2 h2 * :r2"))
         user = server.users["other"]
         self.assertEqual(user.username, "u2")
