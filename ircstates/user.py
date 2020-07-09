@@ -9,6 +9,7 @@ class User(object):
         self.hostname: Optional[str] = None
         self.realname: Optional[str] = None
         self.account:  Optional[str] = None
+        self.server:   Optional[str] = None
         self.away:     Optional[str] = None
         self.channels: Set[str]      = set([])
 

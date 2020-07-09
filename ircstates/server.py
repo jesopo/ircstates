@@ -21,7 +21,7 @@ class ServerException(Exception):
 class ServerDisconnectedException(ServerException):
     pass
 
-WHO_TYPE = "937" # randomly generated
+WHO_TYPE = "735" # randomly generated
 TYPE_EMIT = Optional[Emit]
 
 class Server(object):
@@ -34,6 +34,7 @@ class Server(object):
         self.hostname: Optional[str] = None
         self.realname: Optional[str] = None
         self.account:  Optional[str] = None
+        self.server:   Optional[str] = None
         self.away:     Optional[str] = None
 
         self.registered = False
@@ -111,7 +112,7 @@ class Server(object):
         return channel_user
 
     def prepare_whox(self, target: str) -> Line:
-        return build("WHO", [target, f"n%afhinrtu,{WHO_TYPE}"])
+        return build("WHO", [target, f"n%afhinrstu,{WHO_TYPE}"])
 
     def _self_hostmask(self, hostmask: Hostmask):
         self.nickname = hostmask.nickname
@@ -582,12 +583,17 @@ class Server(object):
         away     = "" if "G" in status else None
         realname = line.params[7].split(" ", 1)[1]
 
+        server:  Optional[str] = None
+        if not line.params[4] == "*":
+            server  = line.params[4]
+
         nickname_lower = self.casefold(line.params[5])
         if nickname_lower == self.nickname_lower:
             emit.self = True
             self.username = username
             self.hostname = hostname
             self.realname = realname
+            self.server   = server
             self.away     = away
 
         if nickname_lower in self.users:
@@ -596,6 +602,7 @@ class Server(object):
             user.username = username
             user.hostname = hostname
             user.realname = realname
+            user.server   = server
             user.away     = away
         return emit
 
@@ -603,17 +610,20 @@ class Server(object):
     # WHOX line, "WHO #channel|nickname" response; only listen for our "type"
     def _handle_whox(self, line: Line) -> Emit:
         emit = self._emit()
-        if line.params[1] == WHO_TYPE and len(line.params) == 9:
-            nickname_lower = self.casefold(line.params[5])
+        if line.params[1] == WHO_TYPE and len(line.params) == 10:
+            nickname_lower = self.casefold(line.params[6])
             username = line.params[2]
             hostname = line.params[4]
-            status   = line.params[6]
+            status   = line.params[7]
             away     = "" if "G" in status else None
-            realname = line.params[8]
+            realname = line.params[9]
 
             account: Optional[str] = None
-            if not line.params[7] == "0":
-                account = line.params[7]
+            if not line.params[8] == "0":
+                account = line.params[8]
+            server:  Optional[str] = None
+            if not line.params[5] == "*":
+                server  = line.params[5]
 
             if nickname_lower in self.users:
                 user = self.users[nickname_lower]
@@ -622,6 +632,7 @@ class Server(object):
                 user.hostname = hostname
                 user.realname = realname
                 user.account  = account
+                user.server   = server
                 user.away     = away
 
             if nickname_lower == self.nickname_lower:
@@ -630,6 +641,7 @@ class Server(object):
                 self.hostname = hostname
                 self.realname = realname
                 self.account  = account
+                self.server   = server
                 self.away     = away
 
         return emit

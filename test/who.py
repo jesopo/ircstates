@@ -14,11 +14,13 @@ class WHOTest(unittest.TestCase):
         self.assertEqual(user.username, "user")
         self.assertEqual(user.hostname, "host")
         self.assertEqual(user.realname, "real")
+        self.assertEqual(user.server,   "server")
         self.assertIsNone(user.away)
 
         self.assertEqual(server.username, user.username)
         self.assertEqual(server.hostname, user.hostname)
         self.assertEqual(server.realname, user.realname)
+        self.assertEqual(server.server,   user.server)
         self.assertIsNone(server.away)
 
         server.parse_tokens(irctokens.tokenise(
@@ -32,22 +34,24 @@ class WHOTest(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         user = server.users["nickname"]
         server.parse_tokens(irctokens.tokenise(
-            f"354 * {WHO_TYPE} user realip host nickname * account :real"))
+            f"354 * {WHO_TYPE} user realip host server nickname * account :real"))
 
         self.assertEqual(user.username, "user")
         self.assertEqual(user.hostname, "host")
         self.assertEqual(user.realname, "real")
         self.assertEqual(user.account,  "account")
+        self.assertEqual(user.server,   "server")
         self.assertIsNone(user.away)
 
         self.assertEqual(server.username, user.username)
         self.assertEqual(server.hostname, user.hostname)
         self.assertEqual(server.realname, user.realname)
         self.assertEqual(server.account,  user.account)
+        self.assertEqual(server.server,   user.server)
         self.assertIsNone(server.away)
 
         server.parse_tokens(irctokens.tokenise(
-            f"354 * {WHO_TYPE} user realip host nickname G account :real"))
+            f"354 * {WHO_TYPE} user realip host server nickname G account :real"))
         self.assertEqual(user.away,   "")
         self.assertEqual(server.away, "")
 
@@ -55,8 +59,13 @@ class WHOTest(unittest.TestCase):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+
+        user = server.users["nickname"]
+        user.account   = "account"
+        server.account = "account"
+
         server.parse_tokens(irctokens.tokenise(
-            f"354 * {WHO_TYPE} user realip host nickname 0 :real"))
+            f"354 * {WHO_TYPE} user realip host server nickname * 0 :real"))
         user = server.users["nickname"]
 
         self.assertEqual(user.account,   None)
