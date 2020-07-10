@@ -87,4 +87,4 @@ ChannelUser(#chan jess +ov)
 
 ## contact
 
-Come say hi at [#irctokens on irc.tilde.chat](https://web.tilde.chat/?join=%23irctokens)
+Come say hi at [##irctokens on freenode](https://webchat.freenode.net/?channels=%23%23irctokens)
