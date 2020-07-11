@@ -59,6 +59,43 @@ class ModeTestChannelList(unittest.TestCase):
         channel = server.channels["#chan"]
         self.assertEqual(channel.list_modes, {})
 
+    def test_banlist(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(
+            irctokens.tokenise("367 * #chan *!*@host setby 1594477713"))
+        server.parse_tokens(
+            irctokens.tokenise("367 * #chan $a:account setby 1594477713"))
+        server.parse_tokens(
+            irctokens.tokenise("367 * #chan r:my*gecos"))
+        server.parse_tokens(irctokens.tokenise("368 * #chan"))
+
+        channel = server.channels["#chan"]
+        self.assertEqual(
+            channel.list_modes["b"],
+            ["*!*@host", "$a:account", "r:my*gecos"]
+        )
+
+    def test_quietlist(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(
+            irctokens.tokenise("728 * #chan q q!*@host setby 1594477713"))
+        server.parse_tokens(
+            irctokens.tokenise("728 * #chan q $a:qaccount setby 1594477713"))
+        server.parse_tokens(
+            irctokens.tokenise("728 * #chan q r:q*my*gecos setby 1594477713"))
+        server.parse_tokens(irctokens.tokenise("729 * #chan q"))
+
+        channel = server.channels["#chan"]
+        self.assertEqual(
+            channel.list_modes["q"],
+            ["q!*@host", "$a:qaccount", "r:q*my*gecos"]
+        )
+
+
 class ModeTestChannelTypeB(unittest.TestCase):
     def test_add(self):
         server = ircstates.Server("test")

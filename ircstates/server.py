@@ -516,6 +516,64 @@ class Server(object):
                 self.modes.append(char)
         return self._emit()
 
+    def _mode_list(self,
+            channel_name: str,
+            mode: str,
+            mask: str):
+        channel_lower = self.casefold(channel_name)
+        if channel_lower in self.channels:
+            channel = self.channels[channel_lower]
+            if not mode in channel._list_modes_temp:
+                channel._list_modes_temp[mode] = []
+            channel._list_modes_temp[mode].append(mask)
+    def _mode_list_end(self,
+            channel_name: str,
+            mode: str):
+        channel_lower = self.casefold(channel_name)
+        if channel_lower in self.channels:
+            channel = self.channels[channel_lower]
+            if mode in channel._list_modes_temp:
+                mlist = channel._list_modes_temp.pop(mode)
+                for mask in mlist:
+                    channel.add_mode(mode, mask, True)
+
+    @line_handler(RPL_BANLIST)
+    def _handle_banlist(self, line: Line) -> Emit:
+        channel = line.params[1]
+        mask    = line.params[2]
+
+        if len(line.params) > 3:
+            # parse these out but we're not storing them yet
+            set_by  = line.params[3]
+            set_at  = int(line.params[4])
+
+        self._mode_list(channel, "b", mask)
+        return self._emit()
+
+    @line_handler(RPL_ENDOFBANLIST)
+    def _handle_banlist_end(self, line: Line) -> Emit:
+        channel = line.params[1]
+        self._mode_list_end(channel, "b")
+        return self._emit()
+
+    @line_handler(RPL_QUIETLIST)
+    def _handle_quietlist(self, line: Line) -> Emit:
+        channel = line.params[1]
+        mode    = line.params[2]
+        mask    = line.params[3]
+        set_by  = line.params[4]
+        set_at  = int(line.params[5])
+
+        self._mode_list(channel, mode, mask)
+        return self._emit()
+
+    @line_handler(RPL_ENDOFQUIETLIST)
+    def _handle_quietlist_end(self, line: Line) -> Emit:
+        channel = line.params[1]
+        mode    = line.params[2]
+        self._mode_list_end(channel, mode)
+        return self._emit()
+
     @line_handler("PRIVMSG")
     @line_handler("NOTICE")
     @line_handler("TAGMSG")
