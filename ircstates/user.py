@@ -11,6 +11,7 @@ class User(object):
         self.account:  Optional[str] = None
         self.server:   Optional[str] = None
         self.away:     Optional[str] = None
+        self.ip:       Optional[str] = None
         self.channels: Set[str]      = set([])
 
     def __repr__(self) -> str:

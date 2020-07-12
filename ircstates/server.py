@@ -36,6 +36,7 @@ class Server(object):
         self.account:  Optional[str] = None
         self.server:   Optional[str] = None
         self.away:     Optional[str] = None
+        self.ip:       Optional[str] = None
 
         self.registered = False
         self.modes: List[str] = []
@@ -682,6 +683,9 @@ class Server(object):
             server:  Optional[str] = None
             if not line.params[5] == "*":
                 server  = line.params[5]
+            ip:      Optional[str] = None
+            if not line.params[3] == "255.255.255.255":
+                ip = line.params[3]
 
             if nickname_lower in self.users:
                 user = self.users[nickname_lower]
@@ -692,6 +696,7 @@ class Server(object):
                 user.account  = account
                 user.server   = server
                 user.away     = away
+                user.ip       = ip
 
             if nickname_lower == self.nickname_lower:
                 emit.self = True
@@ -701,6 +706,7 @@ class Server(object):
                 self.account  = account
                 self.server   = server
                 self.away     = away
+                self.ip       = ip
 
         return emit
 

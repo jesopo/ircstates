@@ -42,6 +42,7 @@ class WHOTest(unittest.TestCase):
         self.assertEqual(user.account,  "account")
         self.assertEqual(user.server,   "server")
         self.assertIsNone(user.away)
+        self.assertEqual(user.ip,       "realip")
 
         self.assertEqual(server.username, user.username)
         self.assertEqual(server.hostname, user.hostname)
@@ -49,6 +50,7 @@ class WHOTest(unittest.TestCase):
         self.assertEqual(server.account,  user.account)
         self.assertEqual(server.server,   user.server)
         self.assertIsNone(server.away)
+        self.assertEqual(server.ip,       user.ip)
 
         server.parse_tokens(irctokens.tokenise(
             f"354 * {WHO_TYPE} user realip host server nickname G account :real"))
