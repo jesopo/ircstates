@@ -696,7 +696,8 @@ class Server(object):
                 user.account  = account
                 user.server   = server
                 user.away     = away
-                user.ip       = ip
+                if ip is not None:
+                    user.ip   = ip
 
             if nickname_lower == self.nickname_lower:
                 emit.self = True
@@ -706,7 +707,8 @@ class Server(object):
                 self.account  = account
                 self.server   = server
                 self.away     = away
-                self.ip       = ip
+                if ip is not None:
+                    self.ip   = ip
 
         return emit
 
