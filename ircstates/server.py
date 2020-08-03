@@ -431,23 +431,25 @@ class Server(object):
                             channel_user.modes.append(char)
                     elif char in channel_user.modes:
                         channel_user.modes.remove(char)
-            elif add:
+            else:
+                has_arg = False
+                is_list = False
                 if char in self.isupport.chanmodes.a_modes:
+                    has_arg = True
+                    is_list = True
+                elif add:
+                    has_arg = char in (self.isupport.chanmodes.b_modes+
+                        self.isupport.chanmodes.c_modes)
+                else: # remove
+                    has_arg = char in self.isupport.chanmodes.b_modes
+
+                if has_arg:
                     arg = params.pop(0)
-                    channel.add_mode(char, arg, True)
-                elif (char in self.isupport.chanmodes.b_modes or
-                        char in self.isupport.chanmodes.c_modes):
-                    arg = params.pop(0)
-                    channel.add_mode(char, arg, False)
+
+                if add:
+                    channel.add_mode(char, arg, is_list)
                 else:
-                    channel.add_mode(char, None, False)
-            else: # remove
-                if (char in self.isupport.chanmodes.a_modes or
-                        char in self.isupport.chanmodes.b_modes):
-                    arg = params.pop(0)
                     channel.remove_mode(char, arg)
-                else:
-                    channel.remove_mode(char, None)
 
             tokens.append((mode, arg))
 

@@ -55,9 +55,10 @@ class ModeTestChannelList(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise("MODE #chan +b asd!*@*"))
+        server.parse_tokens(irctokens.tokenise("MODE #chan +b dsa!*@*"))
         server.parse_tokens(irctokens.tokenise("MODE #chan -b asd!*@*"))
         channel = server.channels["#chan"]
-        self.assertEqual(channel.list_modes, {})
+        self.assertEqual(channel.list_modes, {"b": ["dsa!*@*"]})
 
     def test_banlist(self):
         server = ircstates.Server("test")
