@@ -61,11 +61,7 @@ class Server(object):
         lines = self._decoder.push(data)
         if lines is None:
             raise ServerDisconnectedException()
-        emits: List[TYPE_EMIT] = []
-        for line in lines:
-            emit = self.parse_tokens(line)
-            emits.append(emit)
-        return list(zip(lines, emits))
+        return lines
 
     def parse_tokens(self, line: Line) -> TYPE_EMIT:
         ret_emit: TYPE_EMIT = None
