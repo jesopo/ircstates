@@ -57,7 +57,7 @@ class Server(object):
     def __repr__(self) -> str:
         return f"Server(name={self.name!r})"
 
-    def recv(self, data: bytes) -> List[Tuple[Line, TYPE_EMIT]]:
+    def recv(self, data: bytes) -> List[Line]:
         lines = self._decoder.push(data)
         if lines is None:
             raise ServerDisconnectedException()
