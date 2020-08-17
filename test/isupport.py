@@ -58,24 +58,18 @@ class ISUPPORTTest(unittest.TestCase):
         self.assertEqual(server.isupport.casemapping, "rfc1459")
         server.parse_tokens(irctokens.tokenise("005 * CASEMAPPING=rfc1459 *"))
         self.assertEqual(server.isupport.casemapping, "rfc1459")
-        lower = server.casefold("ÀTEST[]~\\")
-        self.assertEqual(lower, "Àtest{}^|")
 
     def test_ascii(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise("005 * CASEMAPPING=ascii *"))
         self.assertEqual(server.isupport.casemapping, "ascii")
-        lower = server.casefold("ÀTEST[]~\\")
-        self.assertEqual(lower, "Àtest[]~\\")
 
     def test_fallback_to_rfc1459(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname"))
         server.parse_tokens(irctokens.tokenise("005 * CASEMAPPING=asd *"))
         self.assertEqual(server.isupport.casemapping, "rfc1459")
-        lower = server.casefold("ÀTEST[]~\\")
-        self.assertEqual(lower, "Àtest{}^|")
 
     def test_network(self):
         server = ircstates.Server("test")

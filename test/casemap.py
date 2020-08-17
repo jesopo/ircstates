@@ -3,8 +3,8 @@ import ircstates, irctokens
 
 class CaseMapTestMethod(unittest.TestCase):
     def test_rfc1459(self):
-        lower = ircstates.casefold("rfc1459", "ÀTEST[]~\\")
-        self.assertEqual(lower, "Àtest{}^|")
+        lower = ircstates.casefold("rfc1459", "ÀTEST[]^\\")
+        self.assertEqual(lower, "Àtest{}~|")
 
     def test_ascii(self):
         lower = ircstates.casefold("ascii", "ÀTEST[]~\\")
