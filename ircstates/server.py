@@ -1,3 +1,4 @@
+from ipaddress import ip_address
 from typing    import Callable, Dict, List, Optional, Set, Tuple
 from irctokens import Line, build, Hostmask, StatefulDecoder, StatefulEncoder
 from irctokens import hostmask as hostmask_
@@ -683,7 +684,10 @@ class Server(object):
                 server  = line.params[5]
             ip:      Optional[str] = None
             if not line.params[3] == "255.255.255.255":
-                ip = line.params[3]
+                try:
+                    ip = ip_address(line.params[3]).compressed
+                except ValueError:
+                    pass
 
             if nickname_lower in self.users:
                 user = self.users[nickname_lower]

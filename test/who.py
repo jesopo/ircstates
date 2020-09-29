@@ -34,7 +34,7 @@ class WHOTest(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         user = server.users["nickname"]
         server.parse_tokens(irctokens.tokenise(
-            f"354 * {WHO_TYPE} user realip host server nickname * account :real"))
+            f"354 * {WHO_TYPE} user 1.2.3.4 host server nickname * account :real"))
 
         self.assertEqual(user.username, "user")
         self.assertEqual(user.hostname, "host")
@@ -42,7 +42,7 @@ class WHOTest(unittest.TestCase):
         self.assertEqual(user.account,  "account")
         self.assertEqual(user.server,   "server")
         self.assertIsNone(user.away)
-        self.assertEqual(user.ip,       "realip")
+        self.assertEqual(user.ip,       "1.2.3.4")
 
         self.assertEqual(server.username, user.username)
         self.assertEqual(server.hostname, user.hostname)
@@ -68,7 +68,25 @@ class WHOTest(unittest.TestCase):
 
         server.parse_tokens(irctokens.tokenise(
             f"354 * {WHO_TYPE} user realip host server nickname * 0 :real"))
-        user = server.users["nickname"]
 
         self.assertEqual(user.account,   None)
         self.assertEqual(server.account, user.account)
+
+    def test_whox_ipv6(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+
+        user = server.users["nickname"]
+
+        server.parse_tokens(irctokens.tokenise(
+            f"354 * {WHO_TYPE} user 0::1 host server nickname * 0 :real"))
+        self.assertEqual(user.ip, "::1")
+
+        server.parse_tokens(irctokens.tokenise(
+            f"354 * {WHO_TYPE} user 00::2 host server nickname * 0 :real"))
+        self.assertEqual(user.ip, "::2")
+
+        server.parse_tokens(irctokens.tokenise(
+            f"354 * {WHO_TYPE} user fd00:0:0:0::1 host server nickname * 0 :real"))
+        self.assertEqual(user.ip, "fd00::1")
