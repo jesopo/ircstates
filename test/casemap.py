@@ -13,7 +13,7 @@ class CaseMapTestMethod(unittest.TestCase):
 class CaseMapTestCommands(unittest.TestCase):
     def test_join(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":Nickname JOIN #Chan"))
         server.parse_tokens(irctokens.tokenise(":Other JOIN #Chan"))
         self.assertIn("nickname", server.users)
@@ -28,7 +28,7 @@ class CaseMapTestCommands(unittest.TestCase):
 
     def test_nick(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         user = server.users["nickname"]
         server.parse_tokens(irctokens.tokenise(":nickname NICK NewNickname"))

@@ -4,7 +4,7 @@ import ircstates, irctokens
 class EmitTest(unittest.TestCase):
     def test_join(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         emit = server.parse_tokens(
             irctokens.tokenise(":nickname JOIN #chan"))
 
@@ -23,7 +23,7 @@ class EmitTest(unittest.TestCase):
 
     def test_privmsg(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         emit = server.parse_tokens(
             irctokens.tokenise(":nickname PRIVMSG #chan :hello"))
@@ -46,7 +46,7 @@ class EmitTest(unittest.TestCase):
 
     def test_privmsg_nojoin(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
 
         emit = server.parse_tokens(
@@ -62,7 +62,7 @@ class EmitTest(unittest.TestCase):
 
     def test_kick(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         user = server.users["nickname"]
         channel = server.channels["#chan"]
@@ -81,7 +81,7 @@ class EmitTest(unittest.TestCase):
 
     def test_mode_self(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         emit = server.parse_tokens(
             irctokens.tokenise("MODE nickname x+i-i+wi-wi"))
 
@@ -93,7 +93,7 @@ class EmitTest(unittest.TestCase):
 
     def test_mode_channel(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         channel = server.channels["#chan"]
         emit = server.parse_tokens(

@@ -4,7 +4,7 @@ import ircstates, irctokens
 class UserTestNicknameChange(unittest.TestCase):
     def test(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname NICK Nickname2"))
         self.assertEqual(server.nickname,       "Nickname2")
         self.assertEqual(server.nickname_lower, "nickname2")
@@ -24,7 +24,7 @@ class UserTestNicknameChange(unittest.TestCase):
 class UserTestHostmaskJoin(unittest.TestCase):
     def test_both(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(
             irctokens.tokenise(":nickname!user@host JOIN #chan"))
         self.assertEqual(server.username, "user")
@@ -39,7 +39,7 @@ class UserTestHostmaskJoin(unittest.TestCase):
 
     def test_user(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname!user JOIN #chan"))
         self.assertEqual(server.username, "user")
         self.assertIsNone(server.hostname)
@@ -53,7 +53,7 @@ class UserTestHostmaskJoin(unittest.TestCase):
 
     def test_host(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname@host JOIN #chan"))
         self.assertIsNone(server.username)
         self.assertEqual(server.hostname, "host")
@@ -68,7 +68,7 @@ class UserTestHostmaskJoin(unittest.TestCase):
 class UserTestExtendedJoin(unittest.TestCase):
     def test_without_extended_join(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         self.assertIsNone(server.account)
         self.assertIsNone(server.realname)
@@ -79,7 +79,7 @@ class UserTestExtendedJoin(unittest.TestCase):
 
     def test_with_account(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan acc :realname"))
         self.assertEqual(server.account, "acc")
         self.assertEqual(server.realname, "realname")
@@ -90,7 +90,7 @@ class UserTestExtendedJoin(unittest.TestCase):
 
     def test_without_account(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan * :realname"))
         self.assertEqual(server.account, "")
         self.assertEqual(server.realname, "realname")
@@ -102,7 +102,7 @@ class UserTestExtendedJoin(unittest.TestCase):
 class UserTestAccountNotify(unittest.TestCase):
     def test_with_account(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":nickname ACCOUNT acc"))
         self.assertEqual(server.account, "acc")
@@ -113,7 +113,7 @@ class UserTestAccountNotify(unittest.TestCase):
 
     def test_without_account(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":nickname ACCOUNT *"))
         self.assertEqual(server.account, "")
@@ -125,7 +125,7 @@ class UserTestAccountNotify(unittest.TestCase):
 class UserTestHostmaskPRIVMSG(unittest.TestCase):
     def test_both(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(
             irctokens.tokenise(":nickname!user@host PRIVMSG #chan :hi"))
@@ -140,7 +140,7 @@ class UserTestHostmaskPRIVMSG(unittest.TestCase):
 
     def test_user(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(
             irctokens.tokenise(":nickname!user PRIVMSG #chan :hi"))
@@ -155,7 +155,7 @@ class UserTestHostmaskPRIVMSG(unittest.TestCase):
 
     def test_host(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(
             irctokens.tokenise(":nickname@host PRIVMSG #chan :hi"))
@@ -171,22 +171,22 @@ class UserTestHostmaskPRIVMSG(unittest.TestCase):
 class UserTestVisibleHost(unittest.TestCase):
     def test_without_username(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
-        server.parse_tokens(irctokens.tokenise("396 * hostname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
+        server.parse_tokens(irctokens.tokenise("396 * hostname *"))
         self.assertIsNone(server.username)
         self.assertEqual(server.hostname, "hostname")
 
     def test_with_username(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
-        server.parse_tokens(irctokens.tokenise("396 * username@hostname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
+        server.parse_tokens(irctokens.tokenise("396 * username@hostname *"))
         self.assertEqual(server.username, "username")
         self.assertEqual(server.hostname, "hostname")
 
 class UserTestWHO(unittest.TestCase):
     def test(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
         server.parse_tokens(
@@ -205,7 +205,7 @@ class UserTestWHO(unittest.TestCase):
 class UserTestCHGHOST(unittest.TestCase):
     def test(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(
             irctokens.tokenise(":nickname!user@host JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":nickname CHGHOST u h"))
@@ -221,7 +221,7 @@ class UserTestCHGHOST(unittest.TestCase):
 class UserTestWHOIS(unittest.TestCase):
     def test_user_line(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise("311 * nickname u h * :r"))
         self.assertEqual(server.username, "u")
@@ -238,7 +238,7 @@ class UserTestWHOIS(unittest.TestCase):
 class UserTestAway(unittest.TestCase):
     def test_verb_set(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
 
         user = server.users["nickname"]
@@ -251,7 +251,7 @@ class UserTestAway(unittest.TestCase):
 
     def test_verb_unset(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         user = server.users["nickname"]
 
@@ -263,7 +263,7 @@ class UserTestAway(unittest.TestCase):
 
     def test_numeric(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         user = server.users["nickname"]
 
@@ -278,7 +278,7 @@ class UserTestAway(unittest.TestCase):
 class UserTestSETNAME(unittest.TestCase):
     def test(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
         user = server.users["other"]

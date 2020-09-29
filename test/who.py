@@ -5,7 +5,7 @@ from ircstates.server import WHO_TYPE
 class WHOTest(unittest.TestCase):
     def test_who(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         user = server.users["nickname"]
         server.parse_tokens(irctokens.tokenise(
@@ -30,7 +30,7 @@ class WHOTest(unittest.TestCase):
 
     def test_whox(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         user = server.users["nickname"]
         server.parse_tokens(irctokens.tokenise(
@@ -59,7 +59,7 @@ class WHOTest(unittest.TestCase):
 
     def test_whox_no_account(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
 
         user = server.users["nickname"]
@@ -74,7 +74,7 @@ class WHOTest(unittest.TestCase):
 
     def test_whox_ipv6(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
 
         user = server.users["nickname"]

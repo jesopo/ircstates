@@ -5,7 +5,7 @@ import ircstates, irctokens
 class ChannelTestJoin(unittest.TestCase):
     def test_self_join(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         self.assertIn("#chan", server.channels)
         self.assertIn("nickname", server.users)
@@ -20,7 +20,7 @@ class ChannelTestJoin(unittest.TestCase):
 
     def test_other_join(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
         self.assertEqual(len(server.users), 2)
@@ -34,7 +34,7 @@ class ChannelTestJoin(unittest.TestCase):
 class ChannelTestPart(unittest.TestCase):
     def test_self_part(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":nickname PART #chan"))
         self.assertEqual(len(server.users), 0)
@@ -42,7 +42,7 @@ class ChannelTestPart(unittest.TestCase):
 
     def test_other_part(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":other PART #chan"))
@@ -59,7 +59,7 @@ class ChannelTestPart(unittest.TestCase):
 class ChannelTestKick(unittest.TestCase):
     def test_self_kick(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(
             irctokens.tokenise(":nickname KICK #chan nickname"))
@@ -68,7 +68,7 @@ class ChannelTestKick(unittest.TestCase):
 
     def test_other_kick(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(":nickname KICK #chan other"))
@@ -85,7 +85,7 @@ class ChannelTestKick(unittest.TestCase):
 class ChannelTestTopic(unittest.TestCase):
     def test_text(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise("332 * #chan :test"))
         self.assertEqual(server.channels["#chan"].topic, "test")
@@ -93,7 +93,7 @@ class ChannelTestTopic(unittest.TestCase):
     def test_set_by_at(self):
         dt = pendulum.datetime(2020, 3, 12, 14, 27, 57)
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise("333 * #chan other 1584023277"))
         channel = server.channels["#chan"]
@@ -102,7 +102,7 @@ class ChannelTestTopic(unittest.TestCase):
 
     def test_topic_command(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise("TOPIC #chan :hello there"))
         self.assertEqual(server.channels["#chan"].topic, "hello there")
@@ -111,7 +111,7 @@ class ChannelTestCreation(unittest.TestCase):
     def test(self):
         dt = pendulum.datetime(2020, 3, 12, 19, 38, 9)
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise("329 * #chan 1584041889"))
         self.assertEqual(server.channels["#chan"].created, dt)
@@ -119,7 +119,7 @@ class ChannelTestCreation(unittest.TestCase):
 class ChannelTestNAMES(unittest.TestCase):
     def test(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise("353 * * #chan :nickname @+other"))
         self.assertIn("nickname", server.users)
@@ -138,7 +138,7 @@ class ChannelTestNAMES(unittest.TestCase):
 
     def test_userhost_in_names(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
         server.parse_tokens(irctokens.tokenise(
             "353 * * #chan :nickname!user@host other!user2@host2"))
@@ -151,7 +151,7 @@ class ChannelTestNAMES(unittest.TestCase):
 class ChannelNICKAfterJoin(unittest.TestCase):
     def test(self):
         server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname"))
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
 
         user = server.users["nickname"]
