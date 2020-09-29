@@ -195,6 +195,10 @@ class Server(object):
                 channel = self.create_channel(
                     Name(line.params[0], channel_lower)
                 )
+                #TODO: put this somewhere better
+                for mode in self.isupport.chanmodes.a_modes:
+                    channel.list_modes[mode] = []
+
                 self.channels[channel_lower] = channel
 
             self._self_hostmask(line.hostmask)
@@ -534,8 +538,7 @@ class Server(object):
             channel = self.channels[channel_lower]
             if mode in channel._list_modes_temp:
                 mlist = channel._list_modes_temp.pop(mode)
-                for mask in mlist:
-                    channel.add_mode(mode, mask, True)
+                channel.list_modes[mode] = mlist
 
     @line_handler(RPL_BANLIST)
     def _handle_banlist(self, line: Line) -> Emit:

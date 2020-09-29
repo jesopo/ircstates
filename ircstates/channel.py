@@ -52,7 +52,5 @@ class Channel(object):
             if (param is not None and
                     param in self.list_modes[char]):
                 self.list_modes[char].remove(param)
-                if not self.list_modes[char]:
-                    del self.list_modes[char]
         elif char in self.modes:
             del self.modes[char]

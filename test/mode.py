@@ -46,9 +46,15 @@ class ModeTestChannelList(unittest.TestCase):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
-        server.parse_tokens(irctokens.tokenise("MODE #chan +b asd!*@*"))
+
         channel = server.channels["#chan"]
+        self.assertEqual(channel.list_modes, {"b": []})
+
+        server.parse_tokens(irctokens.tokenise("MODE #chan +b asd!*@*"))
         self.assertEqual(channel.list_modes, {"b": ["asd!*@*"]})
+
+        server.parse_tokens(irctokens.tokenise("MODE #chan -b asd!*@*"))
+        self.assertEqual(channel.list_modes, {"b": []})
 
     def test_remove(self):
         server = ircstates.Server("test")
