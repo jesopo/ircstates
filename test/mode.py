@@ -113,7 +113,7 @@ class ModeTestChannelTypeB(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise("MODE #chan +k password"))
         server.parse_tokens(irctokens.tokenise("MODE #chan -k *"))
         channel = server.channels["#chan"]
-        self.assertEqual(channel.list_modes, {})
+        self.assertEqual(channel.modes, {})
 
 class ModeTestChannelTypeC(unittest.TestCase):
     def test_add(self):
@@ -131,7 +131,7 @@ class ModeTestChannelTypeC(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise("MODE #chan +l 100"))
         server.parse_tokens(irctokens.tokenise("MODE #chan -l"))
         channel = server.channels["#chan"]
-        self.assertEqual(channel.list_modes, {})
+        self.assertEqual(channel.modes, {})
 
 class ModeTestChannelTypeD(unittest.TestCase):
     def test_add(self):
@@ -149,7 +149,7 @@ class ModeTestChannelTypeD(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise("MODE #chan +i"))
         server.parse_tokens(irctokens.tokenise("MODE #chan -i"))
         channel = server.channels["#chan"]
-        self.assertEqual(channel.list_modes, {})
+        self.assertEqual(channel.modes, {})
 
 class ModeTestChannelNumeric(unittest.TestCase):
     def test(self):
