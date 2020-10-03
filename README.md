@@ -19,8 +19,10 @@ additional arbitrary functionality on top of it.
 import ircstates
 
 server = ircstates.Server("freenode")
-server.recv(b":server 001 nick :hello world!\r\n")
-server.recv(b":nick JOIN #chan\r\n")
+lines  = server.recv(b":server 001 nick :hello world!\r\n")
+lines += server.recv(b":nick JOIN #chan\r\n")
+for line in lines:
+    server.parse_tokens(line)
 
 chan = server.channels["#chan"]
 ```
@@ -49,6 +51,7 @@ while True:
     recv_data  = sock.recv(1024)
     recv_lines = server.recv(recv_data)
     for line in recv_lines:
+        server.parse_tokens(line)
         print(f"< {line.format()}")
 
         # user defined behaviors...
