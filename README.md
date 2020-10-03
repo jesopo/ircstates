@@ -13,6 +13,18 @@ additional arbitrary functionality on top of it.
 
 ## usage
 
+### simple
+
+```python
+import ircstates
+
+server = ircstates.Server("freenode")
+server.recv(b":server 001 nick :hello world!\r\n")
+server.recv(b":nick JOIN #chan\r\n")
+
+chan = server.channels["#chan"]
+```
+
 ### socket to state
 ```python
 import ircstates, irctokens, socket
