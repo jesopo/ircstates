@@ -20,13 +20,13 @@ import ircstates, irctokens, socket
 NICK = "nickname"
 CHAN = "#chan"
 HOST = "127.0.0.1"
-POST = 6667
+PORT = 6667
 
 server  = ircstates.Server("freenode")
 sock    = socket.socket()
 encoder = irctokens.StatefulEncoder()
 
-sock.connect((HOST, POST))
+sock.connect((HOST, PORT))
 
 def _send(raw):
     tokens = irctokens.tokenise(raw)
