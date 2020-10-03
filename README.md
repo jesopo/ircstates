@@ -26,6 +26,7 @@ chan = server.channels["#chan"]
 ```
 
 ### socket to state
+
 ```python
 import ircstates, irctokens, socket
 
@@ -36,33 +37,23 @@ PORT = 6667
 
 server  = ircstates.Server("freenode")
 sock    = socket.socket()
-encoder = irctokens.StatefulEncoder()
 
 sock.connect((HOST, PORT))
-
-def _send(raw):
-    tokens = irctokens.tokenise(raw)
-    encoder.push(tokens)
+def _send(raw: str):
+    sock.sendall(f"{raw}\r\n".encode("utf8"))
 
 _send("USER test 0 * test")
 _send(f"NICK {NICK}")
 
 while True:
-    while encoder.pending():
-        sent_lines = encoder.pop(sock.send(encoder.pending()))
-        for line in sent_lines:
-            print(f"> {line.format()}")
-
-    recv_lines = server.recv(sock.recv(1024))
+    recv_data  = sock.recv(1024)
+    recv_lines = server.recv(recv_data)
     for line in recv_lines:
         print(f"< {line.format()}")
 
         # user defined behaviors...
         if line.command == "PING":
             _send(f"PONG :{line.params[0]}")
-
-        if line.command == "001" and not CHAN in server.channels:
-            _send(f"JOIN {CHAN}")
 ```
 
 ### get a user's channels
