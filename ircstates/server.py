@@ -582,6 +582,10 @@ class Server(object):
     @line_handler("TAGMSG")
     def _handle_message(self, line: Line) -> Emit:
         emit = self._emit()
+        # this does not visually spark joy
+        if not line.source:
+            return emit
+
         message = line.params[1] if line.params[1:] else None
         if not message is None:
             emit.text = message
