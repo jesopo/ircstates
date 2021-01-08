@@ -683,9 +683,10 @@ class Server(object):
             away     = "" if "G" in status else None
             realname = line.params[9]
 
-            account: Optional[str] = None
+            account  = ""
             if not line.params[8] == "0":
                 account = line.params[8]
+
             server:  Optional[str] = None
             if not line.params[5] == "*":
                 server  = line.params[5]

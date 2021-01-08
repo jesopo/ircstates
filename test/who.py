@@ -14,6 +14,7 @@ class WHOTest(unittest.TestCase):
         self.assertEqual(user.username, "user")
         self.assertEqual(user.hostname, "host")
         self.assertEqual(user.realname, "real")
+        self.assertEqual(user.account,  None)
         self.assertEqual(user.server,   "server")
         self.assertIsNone(user.away)
 
@@ -69,7 +70,7 @@ class WHOTest(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise(
             f"354 * {WHO_TYPE} user realip host server nickname * 0 :real"))
 
-        self.assertEqual(user.account,   None)
+        self.assertEqual(user.account,   "")
         self.assertEqual(server.account, user.account)
 
     def test_whox_ipv6(self):
