@@ -162,3 +162,22 @@ class ChannelNICKAfterJoin(unittest.TestCase):
         self.assertEqual(channel.users, {user.nickname_lower: channel_user})
         self.assertEqual(channel_user.nickname,       "Nickname2")
         self.assertEqual(channel_user.nickname_lower, "nickname2")
+
+class ChannelRENAME(unittest.TestCase):
+    def test(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
+        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        server.parse_tokens(irctokens.tokenise(":other JOIN #chan"))
+
+        user = server.users["nickname"]
+        channel = server.channels["#chan"]
+
+        server.parse_tokens(irctokens.tokenise(":nickname RENAME #chan #chan2 *"))
+
+        self.assertEqual(channel.name, "#chan2")
+        self.assertEqual(set(channel.users.keys()), {"nickname", "other"})
+        self.assertEqual(user.channels, {"#chan2"})
+        self.assertNotIn("#chan", server.channels)
+        self.assertIn("#chan2", server.channels)
+        self.assertEqual(len(server.channels), 1)

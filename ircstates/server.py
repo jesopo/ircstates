@@ -779,6 +779,23 @@ class Server(object):
             user.realname = realname
         return emit
 
+    @line_handler("RENAME")
+    def _handle_RENAME(self, line: Line) -> Emit:
+        source_fold = self.casefold(line.params[0])
+        rename      = line.params[1]
+        rename_fold = self.casefold(rename)
+
+        if source_fold in self.channels:
+            channel = self.channels.pop(source_fold)
+
+            channel.change_name(rename, rename_fold)
+            for nickname in channel.users.keys():
+                user = self.users[nickname]
+                user.channels.remove(source_fold)
+                user.channels.add(rename_fold)
+
+            self.channels[rename_fold] = channel
+
     @line_handler(RPL_AWAY)
     # sent in response to a command directed at a user who is marked as away
     def _handle_RPL_AWAY(self, line: Line) -> Emit:

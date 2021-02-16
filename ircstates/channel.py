@@ -32,6 +32,12 @@ class Channel(object):
     def name_lower(self) -> str:
         return self._name.folded
 
+    def change_name(self,
+            normal: str,
+            folded: str):
+        self._name.normal = normal
+        self._name.folded = folded
+
     def add_mode(self,
             char: str,
             param: Optional[str],
