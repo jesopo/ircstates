@@ -795,6 +795,7 @@ class Server(object):
                 user.channels.add(rename_fold)
 
             self.channels[rename_fold] = channel
+        return self._emit()
 
     @line_handler(RPL_AWAY)
     # sent in response to a command directed at a user who is marked as away
