@@ -2,6 +2,12 @@ import unittest
 import ircstates, irctokens
 
 class ISUPPORTTest(unittest.TestCase):
+    def test_escape(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
+        server.parse_tokens(irctokens.tokenise(r"005 * TEST=a\x20b\\x20\x2 *"))
+        self.assertEqual(server.isupport.raw["TEST"], r"a b\x20x2")
+
     def test_chanmodes(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname *"))

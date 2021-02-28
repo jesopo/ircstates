@@ -3,6 +3,25 @@ from .tokens import ChanModes, Prefix
 
 CASEMAPPINGS = ["rfc1459", "ascii"]
 
+def _parse_escapes(s: str):
+    idx   = 0
+    out = ""
+
+    while idx < (len(s)):
+        if s[idx] == "\\":
+            if s[idx+1:]:
+                if (s[idx+1] == "x" and
+                        len(s[idx+2:]) >= 2):
+                    out += chr(int(s[idx+2:idx+4], 16))
+                    idx += 4
+                else:
+                    out += s[idx+1]
+                    idx += 2
+        else:
+            out += s[idx]
+            idx += 1
+    return out
+
 class ISupport(object):
     raw: Dict[str, Optional[str]]
 
@@ -30,6 +49,7 @@ class ISupport(object):
     def from_tokens(self, tokens: List[str]):
         for token in tokens:
             key, sep, value = token.partition("=")
+            value = _parse_escapes(value)
             self.raw[key] = value if sep else None
 
             if   key == "NETWORK":
