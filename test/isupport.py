@@ -142,3 +142,10 @@ class ISUPPORTTest(unittest.TestCase):
         self.assertEqual(server.isupport.watch, 123)
         server.parse_tokens(irctokens.tokenise("005 * WATCH *"))
         self.assertEqual(server.isupport.watch, -1)
+
+    def test_nicklen(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
+        self.assertEqual(server.isupport.nicklen, 9)
+        server.parse_tokens(irctokens.tokenise("005 * NICKLEN=16 *"))
+        self.assertEqual(server.isupport.nicklen, 16)

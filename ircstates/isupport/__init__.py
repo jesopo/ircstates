@@ -42,6 +42,7 @@ class ISupport(object):
     monitor: Optional[int] = None # -1 if "no limit"
     watch:   Optional[int] = None # -1 if "no limit"
     whox:    bool          = False
+    nicklen: int           = 9 # from RFC1459
 
     def __init__(self):
         self.raw = {}
@@ -89,3 +90,6 @@ class ISupport(object):
 
             elif key == "WHOX":
                 self.whox = True
+
+            elif key == "NICKLEN":
+                self.nicklen = int(value)
