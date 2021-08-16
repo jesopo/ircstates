@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 from .names import Name
 
 class ChannelUser(object):
@@ -8,7 +8,7 @@ class ChannelUser(object):
         self._nickname     = nickname
         self._channel_name = channel_name
 
-        self.modes: List[str] = []
+        self.modes: Set[str] = set()
 
     def __repr__(self) -> str:
         outs: List[str] = [self.channel, self.nickname]

@@ -40,7 +40,7 @@ class Server(object):
         self.ip:       Optional[str] = None
 
         self.registered = False
-        self.modes: List[str] = []
+        self.modes: Set[str] = set()
         self.motd:  List[str] = []
 
         self._decoder = StatefulDecoder()
@@ -359,8 +359,7 @@ class Server(object):
                     self._self_hostmask(hostmask)
 
                 for mode in modes:
-                    if not mode in channel_user.modes:
-                        channel_user.modes.append(mode)
+                    channel_user.modes.add(mode)
         return emit
 
     @line_handler(RPL_CREATIONTIME)
@@ -428,10 +427,9 @@ class Server(object):
                     user = self.users[nickname_lower]
                     channel_user = channel.users[user.nickname_lower]
                     if add:
-                        if not char in channel_user.modes:
-                            channel_user.modes.append(char)
-                    elif char in channel_user.modes:
-                        channel_user.modes.remove(char)
+                        channel_user.modes.add(char)
+                    else:
+                        channel_user.modes.discard(char)
             else:
                 has_arg = False
                 is_list = False
@@ -481,10 +479,9 @@ class Server(object):
                 add  = mode[0] == "+"
                 char = mode[1]
                 if add:
-                    if not char in self.modes:
-                        self.modes.append(char)
-                elif char in self.modes:
-                    self.modes.remove(char)
+                    self.modes.add(char)
+                else:
+                    self.modes.discard(char)
         elif target_lower in self.channels:
             channel = self.channels[self.casefold(target)]
             emit.channel = channel
@@ -516,8 +513,7 @@ class Server(object):
     # our own user modes, "MODE nickname" response (sometimes on-connect?)
     def _handle_umodeis(self, line: Line) -> Emit:
         for char in line.params[1].lstrip("+"):
-            if not char in self.modes:
-                self.modes.append(char)
+            self.modes.add(char)
         return self._emit()
 
     def _mode_list(self,

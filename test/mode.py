@@ -7,14 +7,14 @@ class ModeTestUMode(unittest.TestCase):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise("MODE nickname +i"))
-        self.assertEqual(server.modes, ["i"])
+        self.assertEqual(server.modes, {"i"})
 
     def test_remove(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise("MODE nickname +i"))
         server.parse_tokens(irctokens.tokenise("MODE nickname -i"))
-        self.assertEqual(server.modes, [])
+        self.assertEqual(server.modes, set())
 
 class ModeTestChannelPrefix(unittest.TestCase):
     def test_add(self):
@@ -26,7 +26,7 @@ class ModeTestChannelPrefix(unittest.TestCase):
         user = server.users["nickname"]
         channel = server.channels["#chan"]
         channel_user = channel.users[user.nickname_lower]
-        self.assertEqual(channel_user.modes, ["o", "v"])
+        self.assertEqual(channel_user.modes, {"o", "v"})
 
     def test_remove(self):
         server = ircstates.Server("test")
@@ -39,7 +39,7 @@ class ModeTestChannelPrefix(unittest.TestCase):
         user = server.users["nickname"]
         channel = server.channels["#chan"]
         channel_user = channel.users[user.nickname_lower]
-        self.assertEqual(channel_user.modes, [])
+        self.assertEqual(channel_user.modes, set())
 
 class ModeTestChannelList(unittest.TestCase):
     def test_add(self):
@@ -181,10 +181,10 @@ class ModeTestUserNumeric(unittest.TestCase):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise("221 * +iw"))
-        self.assertEqual(server.modes, ["i", "w"])
+        self.assertEqual(server.modes, {"i", "w"})
 
     def test_without_plus(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise("221 * iw"))
-        self.assertEqual(server.modes, ["i", "w"])
+        self.assertEqual(server.modes, {"i", "w"})

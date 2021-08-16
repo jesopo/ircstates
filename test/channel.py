@@ -134,7 +134,7 @@ class ChannelTestNAMES(unittest.TestCase):
             user.nickname_lower: channel_user_1,
             server.nickname_lower: channel_user_2})
         self.assertEqual(user.channels, set([channel.name_lower]))
-        self.assertEqual(channel_user_1.modes, ["o", "v"])
+        self.assertEqual(channel_user_1.modes, {"o", "v"})
 
     def test_userhost_in_names(self):
         server = ircstates.Server("test")
