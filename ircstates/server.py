@@ -348,7 +348,11 @@ class Server(object):
                     self._add_user(hostmask.nickname, nickname_lower)
                 user = self.users[nickname_lower]
                 users.append(user)
-                channel_user = self._user_join(channel, user)
+
+                if not nickname_lower in channel.users:
+                    channel_user = self._user_join(channel, user)
+                else:
+                    channel_user = channel.users[nickname_lower]
 
                 if hostmask.username:
                     user.username = hostmask.username
