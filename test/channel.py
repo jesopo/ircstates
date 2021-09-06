@@ -1,6 +1,7 @@
 import unittest
 import pendulum
 import ircstates, irctokens
+from freezegun import freeze_time
 
 class ChannelTestJoin(unittest.TestCase):
     def test_self_join(self):
@@ -101,8 +102,14 @@ class ChannelTestTopic(unittest.TestCase):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname *"))
         server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
-        server.parse_tokens(irctokens.tokenise("TOPIC #chan :hello there"))
-        self.assertEqual(server.channels["#chan"].topic, "hello there")
+        dt = pendulum.datetime(2021, 9, 6, 2, 43, 22)
+        with freeze_time("2021-09-06 02:43:22"):
+            server.parse_tokens(irctokens.tokenise(":other TOPIC #chan :hello there"))
+
+        channel = server.channels["#chan"]
+        self.assertEqual(channel.topic, "hello there")
+        self.assertEqual(channel.topic_setter, "other")
+        self.assertEqual(channel.topic_time, dt)
 
 class ChannelTestCreation(unittest.TestCase):
     def test(self):
