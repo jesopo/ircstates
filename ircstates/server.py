@@ -80,7 +80,7 @@ class Server(object):
         if not normal and not wildcard:
             return ret_emit
 
-        for callback in chain(wildcard, normal):  # wildcards first, dont step on more-normal handlers
+        for callback in chain(normal, wildcard):  # Wildcards should not return Emits
             emit = callback(self, line)
             if emit is not None and ret_emit is None:
                 emit.command = line.command
@@ -947,6 +947,7 @@ class Server(object):
     def _handle_all(self, line: Line) -> None:
         if not any(cap in self.agreed_caps for cap in ('solanum.chat/oper', 'solanum.chat/realhost')):
             return
+        
         try:
             hostmask = line.hostmask
 
