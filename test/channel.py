@@ -5,19 +5,25 @@ from freezegun import freeze_time
 
 class ChannelTestJoin(unittest.TestCase):
     def test_self_join(self):
+        dt = pendulum.datetime(2021, 9, 6, 2, 55, 22)
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname *"))
-        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        with freeze_time("2021-09-06 02:55:22"):
+            server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+
         self.assertIn("#chan", server.channels)
         self.assertIn("nickname", server.users)
         self.assertEqual(len(server.users), 1)
         self.assertEqual(len(server.channels), 1)
 
-        user = server.users["nickname"]
+        user    = server.users["nickname"]
         channel = server.channels["#chan"]
         self.assertIn(user.nickname_lower, channel.users)
+
         channel_user = channel.users[user.nickname_lower]
         self.assertEqual(user.channels, set([channel.name_lower]))
+        self.assertEqual(channel_user.since,  dt)
+        self.assertEqual(channel_user.joined, dt)
 
     def test_other_join(self):
         server = ircstates.Server("test")
@@ -122,23 +128,33 @@ class ChannelTestCreation(unittest.TestCase):
 
 class ChannelTestNAMES(unittest.TestCase):
     def test(self):
+        dt_1 = pendulum.datetime(2021, 9, 6, 2, 57, 22)
+        dt_2 = pendulum.datetime(2021, 9, 6, 2, 58, 22)
+
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname *"))
-        server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
-        server.parse_tokens(irctokens.tokenise("353 * * #chan :nickname @+other"))
+        with freeze_time("2021-09-06 02:57:22"):
+            server.parse_tokens(irctokens.tokenise(":nickname JOIN #chan"))
+        with freeze_time("2021-09-06 02:58:22"):
+            server.parse_tokens(irctokens.tokenise("353 * * #chan :nickname @+other"))
+
         self.assertIn("nickname", server.users)
         self.assertIn("other", server.users)
 
         user = server.users["other"]
         channel = server.channels["#chan"]
-        channel_user_1 = channel.users[user.nickname_lower]
-        channel_user_2 = channel.users[server.nickname_lower]
+        channel_user_1 = channel.users[server.nickname_lower]
+        channel_user_2 = channel.users[user.nickname_lower]
 
         self.assertEqual(channel.users, {
-            user.nickname_lower: channel_user_1,
-            server.nickname_lower: channel_user_2})
+            server.nickname_lower: channel_user_1,
+            user.nickname_lower:   channel_user_2
+        })
         self.assertEqual(user.channels, set([channel.name_lower]))
-        self.assertEqual(channel_user_1.modes, {"o", "v"})
+        self.assertEqual(channel_user_2.modes, {"o", "v"})
+
+        self.assertEqual(channel_user_1.since, dt_1)
+        self.assertEqual(channel_user_2.since, dt_2)
 
     def test_userhost_in_names(self):
         server = ircstates.Server("test")

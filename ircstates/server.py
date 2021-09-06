@@ -222,7 +222,8 @@ class Server(object):
                 user.account  = account
                 user.realname = realname
 
-            self._user_join(channel, user)
+            channel_user = self._user_join(channel, user)
+            channel_user.joined = now("utc")
         return emit
 
     def _user_part(self, line: Line,

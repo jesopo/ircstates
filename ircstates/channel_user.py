@@ -1,5 +1,6 @@
-from typing import List, Set
-from .names import Name
+from typing   import List, Optional, Set
+from .names   import Name
+from pendulum import DateTime, now
 
 class ChannelUser(object):
     def __init__(self,
@@ -8,7 +9,9 @@ class ChannelUser(object):
         self._nickname     = nickname
         self._channel_name = channel_name
 
-        self.modes: Set[str] = set()
+        self.modes:  Set[str] = set()
+        self.since = now("utc")
+        self.joined: Optional[DateTime] = None
 
     def __repr__(self) -> str:
         outs: List[str] = [self.channel, self.nickname]
