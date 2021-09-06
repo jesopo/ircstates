@@ -3,6 +3,7 @@ from typing    import Callable, Dict, List, Optional, Set, Tuple
 from irctokens import Line, build, Hostmask, StatefulDecoder, StatefulEncoder
 from irctokens import hostmask as hostmask_
 from pendulum  import from_timestamp, now
+from itertools import chain
 
 from .user         import User
 from .channel      import Channel
@@ -29,15 +30,17 @@ class Server(object):
     def __init__(self, name: str):
         self.name = name
 
-        self.nickname                = ""
-        self.nickname_lower          = ""
-        self.username: Optional[str] = None
-        self.hostname: Optional[str] = None
-        self.realname: Optional[str] = None
-        self.account:  Optional[str] = None
-        self.server:   Optional[str] = None
-        self.away:     Optional[str] = None
-        self.ip:       Optional[str] = None
+        self.nickname = ""
+        self.nickname_lower = ""
+        self.username:   Optional[str] = None
+        self.hostname:   Optional[str] = None
+        self.realname:   Optional[str] = None
+        self.account:    Optional[str] = None
+        self.server:     Optional[str] = None
+        self.away:       Optional[str] = None
+        self.ip:         Optional[str] = None
+        self.is_oper:    bool          = False
+        self.oper_name:  Optional[str] = None
 
         self.registered = False
         self.modes: Set[str] = set()
@@ -66,12 +69,23 @@ class Server(object):
 
     def parse_tokens(self, line: Line) -> TYPE_EMIT:
         ret_emit: TYPE_EMIT = None
+        normal = []
+        wildcard = []
         if line.command in LINE_HANDLERS:
-            for callback in LINE_HANDLERS[line.command]:
-                emit = callback(self, line)
-                if emit is not None and ret_emit is None:
-                    emit.command = line.command
-                    ret_emit = emit
+            normal = LINE_HANDLERS[line.command]
+
+        if '*' in LINE_HANDLERS:
+            wildcard = LINE_HANDLERS['*']
+
+        if not normal and not wildcard:
+            return ret_emit
+
+        for callback in chain(wildcard, normal):  # wildcards first, dont step on more-normal handlers
+            emit = callback(self, line)
+            if emit is not None and ret_emit is None:
+                emit.command = line.command
+                ret_emit = emit
+
         return ret_emit
 
     def casefold(self, s1: str):
@@ -409,7 +423,7 @@ class Server(object):
             channel = self.channels[channel_lower]
             emit.channel = channel
             channel.topic_setter = line.params[2]
-            channel.topic_time   = from_timestamp(int(line.params[3]))
+            channel.topic_time = from_timestamp(int(line.params[3]))
         return emit
 
     def _channel_modes(self,
@@ -747,6 +761,30 @@ class Server(object):
             user.realname = realname
         return emit
 
+    @line_handler(RPL_WHOISOPERATOR)
+    def _handle_whoisoper(self, line: Line):
+        emit = self._emit()
+        nickname = line.params[1]
+        lowered = self.casefold(nickname)
+        if lowered is None:
+            lowered = nickname
+
+        if lowered == self.nickname_lower:
+            emit.self = True
+            self.is_oper = True
+
+        if lowered in self.users:
+            self.users[lowered].is_oper = True
+            emit.user = self.users[lowered]
+
+    @line_handler(RPL_YOUREOPER)
+    def _handle_youreoper(self, line: Line):
+        # this is all freeform except for the fact that its sent on successful oper
+        emit = self._emit()
+        emit.self = True
+        self.is_oper = True
+        return emit
+
     @line_handler("CHGHOST")
     def _handle_CHGHOST(self, line: Line) -> Emit:
         emit = self._emit()
@@ -850,7 +888,6 @@ class Server(object):
         multiline  = line.params[2] == "*"
         caps       = line.params[2 + (1 if multiline else 0)]
 
-
         tokens:     Dict[str, str] = {}
         tokens_str: List[str]      = []
         for cap in filter(bool, caps.split(" ")):
@@ -905,3 +942,48 @@ class Server(object):
         self.account = None
         self._self_hostmask(hostmask)
         return self._emit()
+
+    @line_handler('*')
+    def _handle_all(self, line: Line) -> None:
+        if not any(cap in self.agreed_caps for cap in ('solanum.chat/oper', 'solanum.chat/realhost')):
+            return
+        try:
+            hostmask = line.hostmask
+
+        except ValueError:
+            return  # Bail fast
+
+        if line.tags is None:
+            # kinda silly to handle tags that dont exist, innit?
+            return
+        
+        user: Optional[User] = None
+        nick_lowered = self.casefold(hostmask.nickname)
+        if nick_lowered is None:
+            nick_lowered = hostmask.nickname
+
+        if nick_lowered in self.users:
+            user = self.users[nick_lowered]
+
+        is_me = nick_lowered == self.nickname_lower
+
+
+        if 'solanum.chat/oper' in line.tags:
+            oper_name: Optional[str] = line.tags['solanum.chat/oper']
+            if not oper_name:
+                oper_name = None
+
+            if is_me:
+                self.is_oper = True
+                self.oper_name = oper_name
+
+            elif user is not None:
+                user.is_oper = True
+                user.oper_name = oper_name
+                ...
+
+        if 'solanum.chat/realhost' in line.tags and user is not None:
+            user.real_host = line.tags['solanum.chat/realhost']
+
+        if 'solanum.chat/ip' in line.tags and user is not None:
+            user.real_ip = line.tags['solanum.chat/ip']
