@@ -13,14 +13,6 @@ class SolanumCapTests(unittest.TestCase):
         server._add_user('some', 'some')
         return server
 
-    def test_setoper(self):
-        server = self._create_server()
-        server.agreed_caps.append('solanum.chat/oper')
-        server.parse_tokens(irctokens.tokenise('@solanum.chat/oper=derg :some!one@host JOIN #test'))
-        user = server.users['some']
-        self.assertTrue(user.is_oper)
-        self.assertEqual(user.oper_name, 'derg')
-
     def test_sethost(self):
         server = self._create_server()
         server.agreed_caps.append('solanum.chat/realhost')

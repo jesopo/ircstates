@@ -13,8 +13,6 @@ class User(object):
         self.away:       Optional[str] = None
         self.ip:         Optional[str] = None
         self.channels:   Set[str] = set([])
-        self.is_oper:    bool = False
-        self.oper_name:  Optional[str] = None
         self.real_host:  Optional[str] = None  # Provided by solanum.chat/realhost
         self.real_ip:    Optional[str] = None  # Provided by solanum.chat/realhost
 

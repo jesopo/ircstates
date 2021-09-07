@@ -40,7 +40,6 @@ class Server(object):
         self.away:       Optional[str] = None
         self.ip:         Optional[str] = None
         self.is_oper:    bool          = False
-        self.oper_name:  Optional[str] = None
 
         self.registered = False
         self.modes: Set[str] = set()
@@ -501,6 +500,9 @@ class Server(object):
                     self.modes.add(char)
                 else:
                     self.modes.discard(char)
+                    if char == 'o':
+                        self.is_oper = False
+
         elif target_lower in self.channels:
             channel = self.channels[self.casefold(target)]
             emit.channel = channel
@@ -945,19 +947,18 @@ class Server(object):
 
     @line_handler('*')
     def _handle_all(self, line: Line) -> None:
-        if not any(cap in self.agreed_caps for cap in ('solanum.chat/oper', 'solanum.chat/realhost')):
+        if 'solanum.chat/realhost' not in self.agreed_caps:
             return
-        
-        try:
-            hostmask = line.hostmask
-
-        except ValueError:
-            return  # Bail fast
 
         if line.tags is None:
             # kinda silly to handle tags that dont exist, innit?
             return
-        
+
+        if line.source is None:
+            return
+
+        hostmask = line.hostmask
+
         user: Optional[User] = None
         nick_lowered = self.casefold(hostmask.nickname)
         if nick_lowered is None:
@@ -968,20 +969,6 @@ class Server(object):
 
         is_me = nick_lowered == self.nickname_lower
 
-
-        if 'solanum.chat/oper' in line.tags:
-            oper_name: Optional[str] = line.tags['solanum.chat/oper']
-            if not oper_name:
-                oper_name = None
-
-            if is_me:
-                self.is_oper = True
-                self.oper_name = oper_name
-
-            elif user is not None:
-                user.is_oper = True
-                user.oper_name = oper_name
-                ...
 
         if 'solanum.chat/realhost' in line.tags and user is not None:
             user.real_host = line.tags['solanum.chat/realhost']
