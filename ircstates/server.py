@@ -775,10 +775,6 @@ class Server(object):
             emit.self = True
             self.is_oper = True
 
-        if lowered in self.users:
-            self.users[lowered].is_oper = True
-            emit.user = self.users[lowered]
-
     @line_handler(RPL_YOUREOPER)
     def _handle_youreoper(self, line: Line):
         # this is all freeform except for the fact that its sent on successful oper
