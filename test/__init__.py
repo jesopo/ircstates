@@ -9,3 +9,4 @@ from .emit         import *
 from .who          import *
 from .sasl         import *
 from .solanum_caps import *
+from .oper         import *
