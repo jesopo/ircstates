@@ -5,14 +5,16 @@ class User(object):
     def __init__(self, nickname: Name):
         self._nickname = nickname
 
-        self.username: Optional[str] = None
-        self.hostname: Optional[str] = None
-        self.realname: Optional[str] = None
-        self.account:  Optional[str] = None
-        self.server:   Optional[str] = None
-        self.away:     Optional[str] = None
-        self.ip:       Optional[str] = None
-        self.channels: Set[str]      = set([])
+        self.username:   Optional[str] = None
+        self.hostname:   Optional[str] = None
+        self.realname:   Optional[str] = None
+        self.account:    Optional[str] = None
+        self.server:     Optional[str] = None
+        self.away:       Optional[str] = None
+        self.ip:         Optional[str] = None
+        self.channels:   Set[str] = set([])
+        self.real_host:  Optional[str] = None  # Provided by solanum.chat/realhost
+        self.real_ip:    Optional[str] = None  # Provided by solanum.chat/realhost
 
     def __repr__(self) -> str:
         return f"User(nickname={self.nickname!r})"
