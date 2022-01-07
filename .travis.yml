@@ -7,6 +7,8 @@ python:
   - "3.8-dev"
 install:
   - pip3 install mypy -r requirements.txt
+before_script:
+  - mypy --install-types
 script:
   - pip3 freeze
   - mypy ircstates
