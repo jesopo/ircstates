@@ -6,11 +6,9 @@ python:
   - "3.8"
   - "3.8-dev"
 install:
-  - pip3 install mypy -r requirements.txt
+  - pip3 install mypy types-cachetools -r requirements.txt
 before_script:
-  - mypy --install-types
-script:
   - pip3 freeze
-  - mypy ircstates
+script:
   - python3 -m unittest test
 
