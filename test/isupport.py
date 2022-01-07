@@ -58,25 +58,6 @@ class ISUPPORTTest(unittest.TestCase):
         server.parse_tokens(irctokens.tokenise("005 * MODES=5 *"))
         self.assertEqual(server.isupport.modes, 5)
 
-    def test_rfc1459(self):
-        server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname *"))
-        self.assertEqual(server.isupport.casemapping, "rfc1459")
-        server.parse_tokens(irctokens.tokenise("005 * CASEMAPPING=rfc1459 *"))
-        self.assertEqual(server.isupport.casemapping, "rfc1459")
-
-    def test_ascii(self):
-        server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname *"))
-        server.parse_tokens(irctokens.tokenise("005 * CASEMAPPING=ascii *"))
-        self.assertEqual(server.isupport.casemapping, "ascii")
-
-    def test_fallback_to_rfc1459(self):
-        server = ircstates.Server("test")
-        server.parse_tokens(irctokens.tokenise("001 nickname *"))
-        server.parse_tokens(irctokens.tokenise("005 * CASEMAPPING=asd *"))
-        self.assertEqual(server.isupport.casemapping, "rfc1459")
-
     def test_network(self):
         server = ircstates.Server("test")
         server.parse_tokens(irctokens.tokenise("001 nickname *"))
@@ -149,3 +130,23 @@ class ISUPPORTTest(unittest.TestCase):
         self.assertEqual(server.isupport.nicklen, 9)
         server.parse_tokens(irctokens.tokenise("005 * NICKLEN=16 *"))
         self.assertEqual(server.isupport.nicklen, 16)
+
+class ISupportTestCasemapping(unittest.TestCase):
+    def test_rfc1459(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
+        self.assertEqual(server.isupport.casemapping, ircstates.CaseMap.RFC1459)
+        server.parse_tokens(irctokens.tokenise("005 * CASEMAPPING=rfc1459 *"))
+        self.assertEqual(server.isupport.casemapping, ircstates.CaseMap.RFC1459)
+
+    def test_ascii(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
+        server.parse_tokens(irctokens.tokenise("005 * CASEMAPPING=ascii *"))
+        self.assertEqual(server.isupport.casemapping, ircstates.CaseMap.ASCII)
+
+    def test_unknown(self):
+        server = ircstates.Server("test")
+        server.parse_tokens(irctokens.tokenise("001 nickname *"))
+        with self.assertRaises(ValueError):
+            server.parse_tokens(irctokens.tokenise("005 * CASEMAPPING=asd *"))

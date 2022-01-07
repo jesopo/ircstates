@@ -1,5 +1,6 @@
 from typing import Dict, List, Optional
 from .tokens import ChanModes, Prefix
+from ..casemap import CaseMap
 
 CASEMAPPINGS = ["rfc1459", "ascii"]
 
@@ -31,7 +32,7 @@ class ISupport(object):
     prefix    = Prefix(["o", "v"], ["@", "+"])
 
     modes:       int       = 3 # -1 if "no limit"
-    casemapping: str       = "rfc1459"
+    casemapping: CaseMap   = CaseMap.RFC1459
     chantypes:   List[str] = ["#"]
     statusmsg:   List[str] = []
 
@@ -75,8 +76,7 @@ class ISupport(object):
                 self.watch   = int(value) if value else -1
 
             elif key == "CASEMAPPING":
-                if value in CASEMAPPINGS:
-                    self.casemapping = value
+                self.casemapping = CaseMap(value)
 
             elif key == "CHANTYPES":
                 self.chantypes = list(value)

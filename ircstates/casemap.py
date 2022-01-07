@@ -1,24 +1,24 @@
-import string
-from typing import List
-from cachetools import cached, LRUCache
+from enum import Enum
+from string import ascii_lowercase, ascii_uppercase
+from typing import Dict, List
 
-ASCII_UPPER   = list(string.ascii_uppercase)
-ASCII_LOWER   = list(string.ascii_lowercase)
-RFC1459_UPPER = ASCII_UPPER+list("[]^\\")
-RFC1459_LOWER = ASCII_LOWER+list("{}~|")
+class CaseMap(Enum):
+    ASCII = "ascii"
+    RFC1459 = "rfc1459"
 
-def _replace(s: str, upper: List[str], lower: List[str]):
-    out = ""
-    for char in s:
-        if char in upper:
-            out += lower[upper.index(char)]
-        else:
-            out += char
-    return out
+def _make_trans(upper: str, lower: str):
+    return str.maketrans(dict(zip(upper, lower)))
 
-@cached(cache=LRUCache(maxsize=1024))
-def casefold(mapping: str, s: str):
-    if mapping   == "rfc1459":
-        return _replace(s, RFC1459_UPPER, RFC1459_LOWER)
-    elif mapping == "ascii":
-        return _replace(s, ASCII_UPPER,   ASCII_LOWER)
+CASEMAPS: Dict[CaseMap, Dict[int, str]] = {
+    CaseMap.ASCII: _make_trans(
+        r"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        r"abcdefghijklmnopqrstuvwxyz"
+    ),
+    CaseMap.RFC1459: _make_trans(
+        r"ABCDEFGHIJKLMNOPQRSTUVWXYZ\[]^",
+        r"abcdefghijklmnopqrstuvwxyz|{}~"
+    )
+}
+def casefold(casemap_name: CaseMap, s: str):
+    casemap = CASEMAPS[casemap_name]
+    return s.translate(casemap)
