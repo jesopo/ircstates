@@ -1,5 +1,6 @@
 import string
 from typing import List
+from cachetools import cached, LRUCache
 
 ASCII_UPPER   = list(string.ascii_uppercase)
 ASCII_LOWER   = list(string.ascii_lowercase)
@@ -15,6 +16,7 @@ def _replace(s: str, upper: List[str], lower: List[str]):
             out += char
     return out
 
+@cached(cache=LRUCache(maxsize=1024))
 def casefold(mapping: str, s: str):
     if mapping   == "rfc1459":
         return _replace(s, RFC1459_UPPER, RFC1459_LOWER)
