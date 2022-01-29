@@ -5,7 +5,7 @@ from ..casemap import CaseMap
 CASEMAPPINGS = ["rfc1459", "ascii"]
 
 def _parse_escapes(s: str):
-    idx   = 0
+    idx = 0
     out = ""
 
     while idx < (len(s)):
