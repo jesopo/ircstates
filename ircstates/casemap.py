@@ -1,20 +1,17 @@
 from enum import Enum
 from string import ascii_lowercase, ascii_uppercase
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 class CaseMap(Enum):
     ASCII = "ascii"
     RFC1459 = "rfc1459"
 
-def _make_trans(upper: str, lower: str):
-    return str.maketrans(dict(zip(upper, lower)))
-
-CASEMAPS: Dict[CaseMap, Dict[int, str]] = {
-    CaseMap.ASCII: _make_trans(
+CASEMAPS: Dict[CaseMap, Dict[int, Optional[int]]] = {
+    CaseMap.ASCII: str.maketrans(
         r"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         r"abcdefghijklmnopqrstuvwxyz"
     ),
-    CaseMap.RFC1459: _make_trans(
+    CaseMap.RFC1459: str.maketrans(
         r"ABCDEFGHIJKLMNOPQRSTUVWXYZ\[]^",
         r"abcdefghijklmnopqrstuvwxyz|{}~"
     )
