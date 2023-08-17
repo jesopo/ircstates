@@ -5,7 +5,7 @@ python:
   - "3.8"
   - "3.9"
 install:
-  - pip3 install mypy types-cachetools -r requirements.txt
+  - pip3 install mypy types-cachetools -r requirements-dev.txt
 before_script:
   - pip3 freeze
 script:
