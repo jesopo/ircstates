@@ -1,3 +1,2 @@
-cachetools ~=5.0.0
-irctokens  ~=2.0.2
-pendulum   ~=2.1.0
+irctokens ~=2.0.2
+pendulum  ~=2.1.0
