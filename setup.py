@@ -26,6 +26,6 @@ setuptools.setup(
         "Operating System :: Microsoft :: Windows",
         "Topic :: Communications :: Chat :: Internet Relay Chat"
     ],
-    python_requires='>=3.7',
+    python_requires='>=3.8',
     install_requires=install_requires
 )
