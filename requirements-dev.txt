@@ -1,2 +1,2 @@
 -r requirements.txt
-freezegun ~=1.1.0
+freezegun ~=1.5.2
